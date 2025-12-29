@@ -1,0 +1,605 @@
+<!-- <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>訂單管理</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; }
+    h1 { margin-top: 10px; }
+    label { display: inline-block; width: 140px; margin: 4px 0; }
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"] { width: 220px; }
+    .btn { margin-top: 8px; }
+    table { border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #000; padding: 4px 8px; text-align: center; }
+    .msg-success { color: green; }
+    .msg-error { color: red; }
+    .msg-info { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>訂單管理</h1>
+  <p><a href="index.html">回首頁</a></p>
+
+  <h2>新增 / 修改訂單</h2>
+
+  <form id="orderForm">
+    <input type="hidden" id="orderNumberHidden" />
+    <div>
+      <label for="orderCustomerId">客戶身分證：</label>
+      <input type="text" id="orderCustomerId" required />
+    </div>
+    <div>
+      <label for="orderDate">訂餐日期：</label>
+      <input type="date" id="orderDate" required />
+    </div>
+    <div>
+      <label for="expectedDate">預計交餐日期：</label>
+      <input type="date" id="expectedDate" required />
+    </div>
+    <div>
+      <label for="expectedTime">預計交餐時間：</label>
+      <input type="time" id="expectedTime" required />
+    </div>
+    <div>
+      <label for="qtyA">A 餐數量：</label>
+      <input type="number" id="qtyA" value="0" min="0" />
+    </div>
+    <div>
+      <label for="qtyB">B 餐數量：</label>
+      <input type="number" id="qtyB" value="0" min="0" />
+    </div>
+    <div>
+      <label for="qtyC">C 餐數量：</label>
+      <input type="number" id="qtyC" value="0" min="0" />
+    </div>
+    <div>
+      <label for="supplierName">供應商名稱：</label>
+      <input type="text" id="supplierName" />
+    </div>
+    <div>
+      <label for="supplierId">供應商編號(6碼)：</label>
+      <input type="text" id="supplierId" />
+    </div>
+    <div class="btn">
+      <input type="submit" id="orderSubmitBtn" value="新增訂單" />
+      <button type="button" id="orderCancelEditBtn" style="display:none;">取消編輯</button>
+    </div>
+  </form>
+
+  <p id="orderMessage"></p>
+
+  <h2>訂單列表</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>訂單編號</th>
+        <th>身分證</th>
+        <th>姓名</th>
+        <th>訂餐日期</th>
+        <th>預計交餐</th>
+        <th>實際交餐</th>
+        <th>A</th>
+        <th>B</th>
+        <th>C</th>
+        <th>金額</th>
+        <th>供應商</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="orderTableBody"></tbody>
+  </table> -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>訂單管理</title>
+
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 1000px;
+      margin-top: 40px;
+      background: #ffffff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 26px;
+      color: #333;
+    }
+
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #333;
+    }
+
+    /* 表單樣式 */
+    #orderForm div {
+      margin-bottom: 6px;
+    }
+
+    label {
+      display: inline-block;
+      width: 140px;
+      margin: 4px 0;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"] {
+      width: 240px;
+      padding: 7px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      text-align: right;
+    }
+
+    input[type="submit"], button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 4px;
+      transition: 0.25s;
+    }
+
+    input[type="submit"]:hover,
+    button:hover {
+      background: #005ecb;
+      transform: translateY(-2px);
+    }
+
+    #orderCancelEditBtn {
+      background: #6c757d;
+    }
+    #orderCancelEditBtn:hover {
+      background: #5a6268;
+    }
+
+    /* 訊息顯示 */
+    #orderMessage {
+      min-height: 20px;
+      margin-top: 10px;
+    }
+    .msg-success { color: green; }
+    .msg-error   { color: red; }
+    .msg-info    { color: #555; }
+
+    /* 訂單表格 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+      padding: 8px 6px;
+    }
+
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: 6px 6px;
+      text-align: center;
+      background: #fff;
+    }
+
+    tr:hover td {
+      background: #f1f5ff;
+    }
+
+    /* 操作按鈕小一點 */
+    .table-btn {
+      padding: 4px 8px;
+      font-size: 13px;
+      border-radius: 4px;
+      margin: 0 2px;
+    }
+    .table-btn.edit {
+      background: #17a2b8;
+    }
+    .table-btn.edit:hover {
+      background: #138496;
+    }
+    .table-btn.delete {
+      background: #dc3545;
+    }
+    .table-btn.delete:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>訂單管理</h1>
+    <p><a href="index.html">回首頁</a></p>
+
+    <h2>新增 / 修改訂單</h2>
+
+    <form id="orderForm">
+      <input type="hidden" id="orderNumberHidden" />
+
+      <div>
+        <label for="orderCustomerId">客戶身分證：</label>
+        <input type="text" id="orderCustomerId" required />
+      </div>
+
+      <div>
+        <label for="orderDate">訂餐日期：</label>
+        <input type="date" id="orderDate" required />
+      </div>
+
+      <div>
+        <label for="expectedDate">預計交餐日期：</label>
+        <input type="date" id="expectedDate" required />
+      </div>
+
+      <div>
+        <label for="expectedTime">預計交餐時間：</label>
+        <input type="time" id="expectedTime" required />
+      </div>
+
+      <div>
+        <label for="qtyA">A 餐數量：</label>
+        <input type="number" id="qtyA" value="0" min="0" />
+      </div>
+
+      <div>
+        <label for="qtyB">B 餐數量：</label>
+        <input type="number" id="qtyB" value="0" min="0" />
+      </div>
+
+      <div>
+        <label for="qtyC">C 餐數量：</label>
+        <input type="number" id="qtyC" value="0" min="0" />
+      </div>
+
+      <div>
+        <label for="supplierName">供應商名稱：</label>
+        <input type="text" id="supplierName" />
+      </div>
+
+      <div>
+        <label for="supplierId">供應商編號(6碼)：</label>
+        <input type="text" id="supplierId" />
+      </div>
+
+      <div class="btn">
+        <input type="submit" id="orderSubmitBtn" value="新增訂單" />
+        <button type="button" id="orderCancelEditBtn" style="display:none;">取消編輯</button>
+      </div>
+    </form>
+
+    <p id="orderMessage"></p>
+
+    <h2>訂單列表</h2>
+      <div style="margin-top: 10px; margin-bottom: 5px;">
+    <label for="orderSearch" style="width:auto;font-weight:normal;">查詢訂單（依身分證）：</label>
+    <input type="text" id="orderSearch" placeholder="輸入身分證關鍵字" style="width:240px;padding:6px;">
+    <button type="button" id="orderSearchBtn">查詢</button>
+    <button type="button" id="orderSearchClearBtn">清除</button>
+  </div>
+    <table>
+      <thead>
+        <tr>
+          <th>訂單編號</th>
+          <th>身分證</th>
+          <th>姓名</th>
+          <th>訂餐日期</th>
+          <th>預計交餐</th>
+          <th>實際交餐</th>
+          <th>A</th>
+          <th>B</th>
+          <th>C</th>
+          <th>金額</th>
+          <th>供應商</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="orderTableBody"></tbody>
+    </table>
+  </div>
+  <script>
+    let ordersData = [];
+    let editingOrderNumber = null;
+    let orderKeyword = ""; 
+    function showOrderMessage(text, type) {
+      const msg = document.getElementById("orderMessage");
+      msg.textContent = text;
+      msg.className = "";
+      if (type === "success") msg.classList.add("msg-success");
+      else if (type === "error") msg.classList.add("msg-error");
+      else if (type === "info") msg.classList.add("msg-info");
+    }
+
+    function toDateInputValue(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function toTimeInputValue(timeStr) {
+        if (!timeStr) return "";
+        // 不管是 "HH:MM:SS" 還是 "0001-01-01THH:MM:SS"
+        // 只抓裡面的 HH:MM
+        const m = timeStr.match(/(\d{2}):(\d{2})/);
+        if (!m) return "";
+        return `${m[1]}:${m[2]}`;   // 例如 00:01, 06:44
+    }
+    function loadOrders() {
+    fetch("/api/orders") //oreder api
+        .then(res =>
+        res.json().then(body => ({
+            ok: res.ok,
+            body,
+        }))
+        )
+        .then(({ ok, body }) => {
+        if (!ok) {
+            // 後端有錯：body 可能是 {error: "..."}
+            const msg = body && body.error ? body.error : "載入訂單資料失敗";
+            console.error("loadOrders server error:", msg);
+            ordersData = [];
+            renderOrderTable();
+            showOrderMessage(msg, "error");
+            return;
+        }
+
+        // 後端正常：body 應該是陣列（可能為空）
+        if (!Array.isArray(body)) {
+            console.warn("loadOrders unexpected body:", body);
+            ordersData = [];
+        } else {
+            ordersData = body;
+        }
+
+        renderOrderTable();
+
+        if (ordersData.length === 0) {
+            showOrderMessage("目前沒有符合條件的訂單", "info");
+        } else if (!editingOrderNumber) {
+            showOrderMessage("", "info");
+        }
+        })
+        .catch(err => {
+        console.error("loadOrders fetch/json error:", err);
+        showOrderMessage("載入訂單資料失敗（網路或格式錯誤）", "error");
+        });
+    }
+
+
+        function renderOrderTable() {
+  const tbody = document.getElementById("orderTableBody");
+  tbody.innerHTML = "";
+
+  const kw = orderKeyword.trim().toLowerCase();
+
+    ordersData.forEach((o, idx) => {
+        // 依身分證部分字串過濾（也可以再加姓名）
+        if (kw !== "") {
+        const idLower = (o.IDNumber || "").toLowerCase();
+        if (!idLower.includes(kw)) {
+            return;
+        }
+        }
+
+        const orderDate = toDateInputValue(o.OrderDate);
+        const expDate  = toDateInputValue(o.ExpectedDeliveryDate);
+        const actDate  = toDateInputValue(o.ActualDeliveryDate);
+        const actTime  = o.ActualDeliveryTime ? toTimeInputValue(o.ActualDeliveryTime) : "";
+        const expTime  = o.ExpectedDeliveryTime ? toTimeInputValue(o.ExpectedDeliveryTime) : "";
+
+        const expDisplay = expDate ? `${expDate} ${expTime}` : "";
+        const actDisplay = actDate ? `${actDate} ${actTime}` : "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+        <td>${o.OrderNumber}</td>
+        <td>${o.IDNumber}</td>
+        <td>${o.CustomerName || ""}</td>
+        <td>${orderDate}</td>
+        <td>${expDisplay}</td>
+        <td>${actDisplay}</td>
+        <td>${o.QtyA}</td>
+        <td>${o.QtyB}</td>
+        <td>${o.QtyC}</td>
+        <td>${o.OrderAmount || 0}</td>
+        <td>${o.SupplierName || ""}</td>
+        <td>
+            <button type="button" onclick="startEditOrder(${idx})">編輯</button>
+            <button type="button" onclick="deleteOrder(${o.OrderNumber})">刪除</button>
+        </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    }
+    function resetOrderForm() {
+      document.getElementById("orderForm").reset();
+      document.getElementById("orderCustomerId").readOnly = false;
+      document.getElementById("orderDate").readOnly = false;
+      document.getElementById("orderNumberHidden").value = "";
+      document.getElementById("orderSubmitBtn").value = "新增訂單";
+      document.getElementById("orderCancelEditBtn").style.display = "none";
+      editingOrderNumber = null;
+      document.getElementById("qtyA").value = 0;
+      document.getElementById("qtyB").value = 0;
+      document.getElementById("qtyC").value = 0;
+    }
+
+    function startEditOrder(index) {
+      const o = ordersData[index];
+      editingOrderNumber = o.OrderNumber;
+
+      document.getElementById("orderNumberHidden").value = o.OrderNumber;
+      document.getElementById("orderCustomerId").value = o.IDNumber;
+      document.getElementById("orderCustomerId").readOnly = true; // 不改客戶
+      document.getElementById("orderDate").value = toDateInputValue(o.OrderDate);
+      document.getElementById("orderDate").readOnly = true;       // 不改訂餐日期
+
+      document.getElementById("expectedDate").value = toDateInputValue(o.ExpectedDeliveryDate);
+      document.getElementById("expectedTime").value = o.ExpectedDeliveryTime ? toTimeInputValue(o.ExpectedDeliveryTime) : "";
+      document.getElementById("qtyA").value = o.QtyA;
+      document.getElementById("qtyB").value = o.QtyB;
+      document.getElementById("qtyC").value = o.QtyC;
+      document.getElementById("supplierName").value = o.SupplierName || "";
+      document.getElementById("supplierId").value = o.SupplierID || "";
+
+      document.getElementById("orderSubmitBtn").value = "儲存修改";
+      document.getElementById("orderCancelEditBtn").style.display = "inline-block";
+      showOrderMessage("正在編輯訂單編號：" + o.OrderNumber, "info");
+    }
+
+    document.getElementById("orderCancelEditBtn").addEventListener("click", () => {
+      resetOrderForm();
+      showOrderMessage("已取消編輯", "info");
+    });
+
+    document.getElementById("orderForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const payload = {
+        idnumber: document.getElementById("orderCustomerId").value.trim(),
+        orderDate: document.getElementById("orderDate").value,
+        expectedDate: document.getElementById("expectedDate").value,
+        expectedTime: document.getElementById("expectedTime").value || "00:00",
+        qtyA: parseInt(document.getElementById("qtyA").value || "0", 10),
+        qtyB: parseInt(document.getElementById("qtyB").value || "0", 10),
+        qtyC: parseInt(document.getElementById("qtyC").value || "0", 10),
+        supplierName: document.getElementById("supplierName").value.trim(),
+        supplierID: document.getElementById("supplierId").value.trim(),
+      };
+
+      if (!payload.idnumber || !payload.orderDate || !payload.expectedDate || !payload.expectedTime) {
+        showOrderMessage("客戶、訂餐日期、預計交餐日期/時間為必填", "error");
+        return;
+      }
+
+      if (!editingOrderNumber) {
+        // 新增
+        fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) {
+              showOrderMessage(res.error, "error");
+            } else {
+              showOrderMessage("新增訂單成功", "success");
+              resetOrderForm();
+              loadOrders();
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            showOrderMessage("新增訂單失敗", "error");
+          });
+      } else {
+        // 修改
+        const body = Object.assign(
+          {
+            orderNumber: editingOrderNumber,
+          },
+          payload
+        );
+
+        fetch("/api/orders/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+          .then(res => res.json())
+          .then(res => {
+            if (res.error) {
+              showOrderMessage(res.error, "error");
+            } else {
+              showOrderMessage("修改訂單成功", "success");
+              resetOrderForm();
+              loadOrders();
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            showOrderMessage("修改訂單失敗", "error");
+          });
+      }
+    });
+    function deleteOrder(orderNumber) {
+        if (!confirm("確定要刪除此訂單？編號：" + orderNumber + "？")) {
+            return;
+        }
+
+        fetch("/api/orders/delete?orderNumber=" + encodeURIComponent(orderNumber), {
+            method: "DELETE",
+        })
+            .then(res => res.json())
+            .then(res => {
+            if (res.error) {
+                showOrderMessage(res.error, "error");
+            } else {
+                showOrderMessage("刪除訂單成功", "success");
+                if (editingOrderNumber === orderNumber) {
+                resetOrderForm();
+                }
+                loadOrders();
+            }
+            })
+            .catch(err => {
+            console.error(err);
+            showOrderMessage("刪除訂單失敗", "error");
+            });
+        }
+
+        // 🔍 訂單查詢：依身分證
+        document.getElementById("orderSearchBtn").addEventListener("click", () => {
+        orderKeyword = document.getElementById("orderSearch").value;
+        renderOrderTable();
+        });
+
+        document.getElementById("orderSearchClearBtn").addEventListener("click", () => {
+        orderKeyword = "";
+        document.getElementById("orderSearch").value = "";
+        renderOrderTable();
+        });
+    window.addEventListener("load", loadOrders);
+  </script>
+</body>
+</html>
