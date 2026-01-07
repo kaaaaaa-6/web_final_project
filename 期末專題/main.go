@@ -144,7 +144,7 @@ func handleUpdateCustomer(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Println("👉 收到 UPDATE Customer:", body.IDNumber)
+    log.Println("收到 UPDATE Customer:", body.IDNumber)
 
     _, err := db.Exec(
         `EXEC sp_UpdateCustomerBasicInfo 
@@ -177,7 +177,7 @@ func handleDeleteCustomer(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Println("👉 收到 DELETE Customer:", id)
+    log.Println("收到 DELETE Customer:", id)
 
     res, err := db.Exec(
         `EXEC sp_DeleteCustomerBasicInfo @IDNumber = @p1`,
@@ -189,7 +189,7 @@ func handleDeleteCustomer(w http.ResponseWriter, r *http.Request) {
         return
     }
 	rows, _ := res.RowsAffected()
-	log.Println("🧹 刪除客戶 RowsAffected =", rows)
+	log.Println("刪除客戶 RowsAffected =", rows)
     // writeJSON(w, http.StatusOK, map[string]string{"message": "刪除客戶成功"})
 	writeJSON(w, http.StatusOK, map[string]interface{}{
         "message": "刪除客戶成功",
@@ -367,7 +367,7 @@ func handleUpdateOrder(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Println("👉 收到 UPDATE Order:", body.OrderNumber)
+    log.Println("收到 UPDATE Order:", body.OrderNumber)
 
     _, err := db.Exec(
         `EXEC sp_UpdateCustomerOrder
@@ -409,7 +409,7 @@ func handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    log.Println("👉 收到 DELETE Order:", orderNumStr)
+    log.Println("收到 DELETE Order:", orderNumStr)
 
     _, err := db.Exec(
         `EXEC sp_DeleteCustomerOrder @OrderNumber = @p1`,
@@ -463,7 +463,7 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
     }
 
     rows, _ := res.RowsAffected()
-    log.Println("✅ updateCustomerStatus RowsAffected =", rows)
+    log.Println("updateCustomerStatus RowsAffected =", rows)
 
     writeJSON(w, http.StatusOK, map[string]interface{}{
         "message": "狀態更新成功",
@@ -486,7 +486,7 @@ func main() {
 	// 連線字串：依你實際環境調整
 	// 例：local SQL Express：
 	// connStr := "server=localhost\\SQLEXPRESS;user id=appuser;password=AppUser!12345;database=CustomerOrderDB;encrypt=disable"
-	connStr := "server=localhost;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
+	connStr := "server=100.81.26.68;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
 
 	var err error
 	db, err = sql.Open("sqlserver", connStr)
@@ -496,7 +496,7 @@ func main() {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Ping DB error:", err)
 	}
-	log.Println("✅ 已連線到 SQL Server")
+	log.Println("已連線到 SQL Server")
 
 	// API: 客戶
 	http.HandleFunc("/api/customers", func(w http.ResponseWriter, r *http.Request) {
@@ -531,7 +531,7 @@ func main() {
 	fs := http.FileServer(http.Dir(publicDir))
 	http.Handle("/", fs) // 直接讓 / 對應到 public/
 
-	log.Println("🚀 伺服器啟動於 http://localhost:8080")
+	log.Println("伺服器啟動於 http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("ListenAndServe error:", err)
 	}
