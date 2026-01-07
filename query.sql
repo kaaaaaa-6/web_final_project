@@ -1,5 +1,11 @@
-﻿
-CREATE TABLE CustomerBasicinfo (
+﻿IF DB_ID(N'期末專題') IS NULL
+BEGIN
+    CREATE DATABASE [期末專題];
+END
+GO
+USE [期末專題];
+GO
+CREATE TABLE CustomerBasicInfo (
     IDNumber           CHAR(10)       NOT NULL,
     CustomerName       NVARCHAR(50)    NOT NULL,
     Phone              NVARCHAR(20)    NULL,
@@ -7,8 +13,10 @@ CREATE TABLE CustomerBasicinfo (
     RegistrationDate   DATE            NOT NULL,
     ConsumptionStatus  NVARCHAR(10)    NOT NULL
 );
+GO
 CREATE TABLE CustomerOrderRecord (
-    OrderNumber            INT            NOT NULL,
+    --- OrderNumber            INT            NOT NULL,
+	OrderNumber INT IDENTITY(1,1) NOT NULL
     IDNumber               CHAR(10)       NOT NULL,
     OrderDate              DATE           NOT NULL,
     ExpectedDeliveryDate   DATE           NOT NULL,
@@ -22,6 +30,7 @@ CREATE TABLE CustomerOrderRecord (
     SupplierName           NVARCHAR(50)   NULL,
     SupplierID             CHAR(6)        NULL
 );
+GO
 CREATE TABLE DeletedCustomerOrderRecord (
     OrderNumber            INT            NOT NULL,
     IDNumber               CHAR(10)       NOT NULL,
@@ -38,7 +47,7 @@ CREATE TABLE DeletedCustomerOrderRecord (
     SupplierID             CHAR(6)        NULL,
     DeletedAt              DATETIME       NOT NULL
 );
-
+GO
 CREATE VIEW V_ActiveCustomers
 AS
 SELECT
@@ -73,7 +82,6 @@ INNER JOIN dbo.CustomerBasicInfo AS c
     ON o.IDNumber = c.IDNumber
 WHERE c.ConsumptionStatus = N'Active';
 
-USE [期末專題];
 GO
 
 SET ANSI_NULLS ON;
@@ -98,8 +106,8 @@ BEGIN
     WHERE IDNumber = @IDNumber;
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
@@ -116,8 +124,8 @@ BEGIN
     WHERE OrderNumber = @OrderNumber;
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
@@ -151,8 +159,8 @@ BEGIN
     );
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
@@ -187,8 +195,8 @@ BEGIN
     );
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
@@ -211,8 +219,8 @@ BEGIN
     WHERE IDNumber = @IDNumber;
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
@@ -243,8 +251,8 @@ BEGIN
     WHERE OrderNumber = @OrderNumber;
 END;
 GO
-USE [期末專題];
-GO
+
+
 
 SET ANSI_NULLS ON;
 GO
