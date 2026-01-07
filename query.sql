@@ -1,4 +1,5 @@
-﻿CREATE TABLE CustomerBasicinfo (
+﻿
+CREATE TABLE CustomerBasicinfo (
     IDNumber           CHAR(10)       NOT NULL,
     CustomerName       NVARCHAR(50)    NOT NULL,
     Phone              NVARCHAR(20)    NULL,
@@ -49,6 +50,7 @@ SELECT
     ConsumptionStatus
 FROM dbo.CustomerBasicInfo
 WHERE ConsumptionStatus = N'Active';
+GO
 CREATE VIEW V_CustomerOrders
 AS
 SELECT

@@ -7,8 +7,13 @@ import (
 	"net/http"
 	"path/filepath"
 	"time"
-
+	"os"
+	"bufio"
+	"fmt"
+	"syscall"
+	"strings"
 	_ "github.com/microsoft/go-mssqldb"
+	"golang.org/x/term"
 )
 
 // ===== 資料結構 =====
@@ -472,6 +477,33 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // ===== 小工具：空字串轉 NULL =====
+func prompt(reader *bufio.Reader, label string, def string) (string, error) {
+    if def != "" {
+        fmt.Printf("%s (預設: %s): ", label, def)
+    } else {
+        fmt.Printf("%s: ", label)
+    }
+
+    s, err := reader.ReadString('\n')
+    if err != nil {
+        return "", err
+    }
+    s = strings.TrimSpace(s)
+    if s == "" {
+        return def, nil
+    }
+    return s, nil
+}
+
+func promptPassword(label string) (string, error) {
+    fmt.Printf("%s: ", label)
+    b, err := term.ReadPassword(int(syscall.Stdin))
+    fmt.Println()
+    if err != nil {
+        return "", err
+    }
+    return strings.TrimSpace(string(b)), nil
+}
 
 func nullOrString(s string) interface{} {
 	if s == "" {
@@ -486,9 +518,47 @@ func main() {
 	// 連線字串：依你實際環境調整
 	// 例：local SQL Express：
 	// connStr := "server=localhost\\SQLEXPRESS;user id=appuser;password=AppUser!12345;database=CustomerOrderDB;encrypt=disable"
-	connStr := "server=localhost;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
 
-	var err error
+	//connStr := "server=localhost;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
+	reader := bufio.NewReader(os.Stdin)
+
+    server, err := prompt(reader, "SQL Server host", "localhost")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    port, err := prompt(reader, "SQL Server port", "1433")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    user, err := prompt(reader, "SQL Server username", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if user == "" {
+        log.Fatal("username 不可為空")
+    }
+
+    pass, err := promptPassword("SQL Server password (不回顯)")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if pass == "" {
+        log.Fatal("password 不可為空")
+    }
+
+    dbName, err := prompt(reader, "Database name", "期末專題")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 組連線字串（注意：不要把密碼 log 出來）
+    connStr := fmt.Sprintf(
+        "server=%s;port=%s;user id=%s;password=%s;database=%s;encrypt=disable",
+        server, port, user, pass, dbName,
+    )
+	//var err error
 	db, err = sql.Open("sqlserver", connStr)
 	if err != nil {
 		log.Fatal("Open DB error:", err)
