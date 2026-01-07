@@ -435,6 +435,52 @@ func handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "刪除訂單成功"})
 }
+
+// 交餐標記
+func handleMarkDelivered(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body struct {
+		OrderNumber int    `json:"orderNumber"`
+		ActualDate  string `json:"actualDate"`
+		ActualTime  string `json:"actualTime"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		log.Println("標記交餐解析錯誤:", err)
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "請求格式錯誤"})
+		return
+	}
+
+	if body.OrderNumber == 0 || body.ActualDate == "" || body.ActualTime == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "訂單編號、交餐日期和時間為必填"})
+		return
+	}
+
+	log.Println("👉 標記訂單已交餐:", body.OrderNumber, body.ActualDate, body.ActualTime)
+
+	// ✨ 直接更新資料庫，不需要 Stored Procedure
+	_, err := db.Exec(`
+		UPDATE CustomerOrderRecord
+		SET ActualDeliveryDate = @p1,
+		    ActualDeliveryTime = @p2
+		WHERE OrderNumber = @p3`,
+		body.ActualDate,
+		body.ActualTime,
+		body.OrderNumber,
+	)
+	if err != nil {
+		log.Println("標記交餐失敗:", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "標記交餐失敗：" + err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "標記交餐成功"})
+}
+
 func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -588,11 +634,13 @@ func main() {
 	router.HandleFunc("/api/orders", handlePostOrder).Methods("POST")
 	router.HandleFunc("/api/orders/update", handleUpdateOrder)
 	router.HandleFunc("/api/orders/delete", handleDeleteOrder)
+	router.HandleFunc("/api/orders/deliver", handleMarkDelivered)
 
 	// 靜態檔案：./public 底下
 	// publicDir := filepath.Join(".", "public")
 	// fs := http.FileServer(http.Dir(publicDir))
 	// http.Handle("/", fs) // 直接讓 / 對應到 public/
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -600,7 +648,6 @@ func main() {
 		AllowCredentials: false,
 	})
 
-	// Use the mux router with CORS, not the default serve mux
 	handler := c.Handler(router)
 
 	log.Println("🚀 伺服器啟動於 http://localhost:8080 ")

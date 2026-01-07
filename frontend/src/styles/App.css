@@ -1,13 +1,28 @@
+.customers-table .actions-col {
+  white-space: nowrap;
+}
+
+/* Smaller status badge and flexible actions on small screens */
+@media (max-width: 576px) {
+  .status-badge {
+    font-size: 0.75rem !important;
+    padding: 0.25em 0.5em !important;
+  }
+  .customers-table .actions-col {
+    white-space: normal;
+  }
+  .customers-table th.status-col {
+    width: 8% !important;
+  }
+}
 .app-wrapper {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #FAF7F2 0%, #F5EFEB 100%);
 }
 
 .navbar {
   box-shadow: 0 4px 12px rgba(0,0,0,.1);
-  background: linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%) !important;
 }
 
 .navbar-brand {
@@ -25,28 +40,28 @@
 }
 
 .nav-link:hover {
-  color: #FFE5CC !important;
+  color: var(--text-light) !important;
   transform: translateY(-2px);
 }
 
 .nav-link.active {
   font-weight: 700;
-  border-bottom: 3px solid #FFE5CC;
-  color: #FFE5CC !important;
+  border-bottom: 3px solid var(--text-light);
+  color: var(--text-light) !important;
 }
 
-.card {
+.card.card-custom {
   border: none;
-  box-shadow: 0 2px 8px rgba(139, 111, 71, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-color);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 12px;
-  background: #FFFBF8;
+  background: var(--surface-bg);
 }
 
-.card:hover {
+.card.card-custom:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(139, 111, 71, 0.15);
-  border-color: #D4A574;
+  box-shadow: 0 8px 20px var(--shadow-hover-color);
+  border-color: var(--border-accent);
 }
 
 .btn {
@@ -60,42 +75,43 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%);
-  color: white;
+  background-color: var(--primary-bg);
+  color: var(--text-on-primary);
+  border: none;
 }
 
 .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
-  background: linear-gradient(135deg, #6F5738 0%, #7F6842 100%);
+  background-color: var(--primary-hover-bg);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.3);
+  box-shadow: 0 4px 12px var(--shadow-strong-color);
 }
 
 .btn-success {
-  background: #A67C52;
-  border-color: #A67C52;
+  background-color: var(--accent-bg);
+  border: none;
+  color: var(--text-on-primary);
 }
 
 .btn-success:hover, .btn-success:focus {
-  background: #8B6442;
-  border-color: #8B6442;
+  background-color: var(--primary-hover-bg);
   transform: translateY(-2px);
 }
 
 .table {
-  background: white;
+  background: var(--table-bg);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #E8D7C8;
+  border: 1px solid var(--border-color);
 }
 
 .table thead {
-  background: linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%);
-  color: white;
+  background-color: var(--primary-bg);
+  color: var(--text-on-primary);
   font-weight: 600;
 }
 
 .table tbody tr:hover {
-  background: #FFF5F0;
+  background: var(--table-hover-bg);
 }
 
 .table tbody tr {
@@ -136,13 +152,14 @@
 }
 
 .badge.bg-primary, .badge.bg-success {
-  background: linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%) !important;
+  background-color: var(--primary-bg) !important;
+  color: var(--text-on-primary);
 }
 
 footer {
   margin-top: auto;
-  background: linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%) !important;
-  color: white;
+  background-color: var(--primary-bg) !important;
+  color: var(--text-on-primary);
 }
 
 footer .text-muted {
@@ -163,7 +180,7 @@ footer .text-muted {
 .modal-header {
   border-bottom: 2px solid #E8D7C8;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #F5EFEB 0%, #FFFBF8 100%);
+  background-color: var(--surface-bg);
 }
 
 .modal-footer {

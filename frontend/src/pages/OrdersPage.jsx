@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Table, Card, Alert, Badge, InputGroup } from 'react-bootstrap';
-
+import { Container, Row, Col, Form, Button, Table, Card, Alert, Badge, InputGroup, Spinner } from 'react-bootstrap';
 import { Trash, PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search } from 'react-bootstrap-icons';
+import { API_ORDERS_URL } from '../api/apiConfig';
 
-const API_Orders_URL = 'http://localhost:8080/api/orders';
+const API_Orders_URL = API_ORDERS_URL;
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     orderCustomerId: '',
     orderDate: '',
@@ -39,6 +40,7 @@ const OrdersPage = () => {
 
 
   const loadOrders = async () => {
+    setLoading(true);
     try {
       const res = await fetch(API_Orders_URL);
       const body = await res.json();
@@ -54,6 +56,8 @@ const OrdersPage = () => {
     } catch (err) {
       console.error(err);
       setMessage({ type: 'danger', text: '載入訂單資料失敗' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,14 +202,16 @@ const OrdersPage = () => {
       });
       const result = await res.json();
       
-      if (result.error) {
-        setMessage({ type: 'danger', text: result.error });
+      if (!res.ok || result.error) {
+        setMessage({ type: 'danger', text: result.error || '標記失敗，請稍後再試' });
+        console.error('標記交餐錯誤:', result);
       } else {
         setMessage({ type: 'success', text: '已標記交餐成功！' });
         loadOrders();
       }
     } catch (err) {
-      setMessage({ type: 'danger', text: '標記失敗' });
+      console.error('標記交餐失敗:', err);
+      setMessage({ type: 'danger', text: '標記失敗，請檢查網路連線' });
     }
   };
 
@@ -227,7 +233,7 @@ const OrdersPage = () => {
   return (
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ color: '#8B6F47', fontWeight: '700' }}>客戶訂餐管理系統</h1>
+        <h1 style={{ color: '#8B6F47', fontWeight: '700' }}>訂單管理</h1>
         <Button variant="outline-secondary" href="/" style={{ borderColor: '#8B6F47', color: '#8B6F47', fontWeight: '600' }}>← 回首頁</Button>
       </div>
 
@@ -241,7 +247,7 @@ const OrdersPage = () => {
       <Row className="g-4">
         {/* 左側：表單區域 */}
         <Col lg={3} className="mb-4">
-          <Card className="shadow-sm border-0" style={{ borderTop: '4px solid #8B6F47' }}>
+          <Card className="shadow-sm border-0 card-border-top-custom">
             <Card.Header style={{ background: 'linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%)', color: 'white', fontWeight: '600' }}>
               {editingId ? <><PencilSquare className="me-2" />編輯訂單</> : <><PlusCircle className="me-2" />新增訂單</>}
             </Card.Header>
@@ -400,106 +406,112 @@ const OrdersPage = () => {
                   >全部</Button>
                 </Col>
               </Row>
-
-              <div className="table-responsive">
-                <Table hover bordered striped className="align-middle mb-0" style={{ fontSize: '0.9rem', borderColor: '#E8D7C8', tableLayout: 'fixed' }}>
-                  <thead style={{ background: 'linear-gradient(135deg, #6B5437 0%, #7D5E42 100%)', color: 'white', fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                    <tr>
-                      <th style={{ borderColor: '#E8D7C8', width: '5%', textAlign: 'center' }}>交餐</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '5%' }}>ID</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '10%' }}>身分證</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '7%' }}>姓名</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '10%' }}>訂餐日期</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '10%' }}>預計交餐</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '10%' }}>實際交餐</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '4%' }}>A</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '4%' }}>B</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '4%' }}>C</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '7%' }}>金額</th>
-                      <th style={{ borderColor: '#E8D7C8', width: '7%' }}>供應商</th>
-                      <th style={{ borderColor: '#E8D7C8', textAlign: 'center', width: '8%' }}>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.map((o) => (
-                      <tr key={o.OrderNumber} style={{ borderBottomColor: '#E8D7C8' }}>
-                        <td style={{ borderColor: '#E8D7C8', textAlign: 'center' }}>
-                          {o.ActualDeliveryDate ? (
-                            <CheckCircle 
-                              size={24} 
-                              style={{ color: '#28a745', cursor: 'default' }}
-                              title={`已交餐：${toDateValue(o.ActualDeliveryDate)} ${o.ActualDeliveryTime ? toTimeValue(o.ActualDeliveryTime) : ''}`}
-                            />
-                          ) : (
-                            <CheckCircle 
-                              size={24} 
-                              style={{ color: '#ccc', cursor: 'pointer', transition: 'color 0.2s' }}
-                              onClick={() => handleMarkDelivered(o.OrderNumber)}
-                              onMouseEnter={(e) => e.target.style.color = '#A67C52'}
-                              onMouseLeave={(e) => e.target.style.color = '#ccc'}
-                              title="點擊標記為已交餐"
-                            />
-                          )}
-                        </td>
-                        <td className="fw-bold" style={{ borderColor: '#E8D7C8' }}>{o.OrderNumber}</td>
-                        <td style={{ borderColor: '#E8D7C8' }}><small>{o.IDNumber}</small></td>
-                        <td style={{ borderColor: '#E8D7C8' }}>{o.CustomerName}</td>
-                        <td style={{ borderColor: '#E8D7C8' }}><small>{toDateValue(o.OrderDate)}</small></td>
-                        <td style={{ borderColor: '#E8D7C8' }}>
-                          <small>
-                            {toDateValue(o.ExpectedDeliveryDate)}<br/>
-                            {o.ExpectedDeliveryTime ? toTimeValue(o.ExpectedDeliveryTime) : '-'}
-                          </small>
-                        </td>
-                        <td style={{ borderColor: '#E8D7C8' }}>
-                          <small>
-                            {o.ActualDeliveryDate ? toDateValue(o.ActualDeliveryDate) : '-'}<br/>
-                            {o.ActualDeliveryTime ? toTimeValue(o.ActualDeliveryTime) : '-'}
-                          </small>
-                        </td>
-                        <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyA || 0}</td>
-                        <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyB || 0}</td>
-                        <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyC || 0}</td>
-                        <td className="text-end fw-bold" style={{ borderColor: '#E8D7C8', color: '#8B6F47' }}>
-                          ${o.OrderAmount}
-                        </td>
-                        <td style={{ borderColor: '#E8D7C8' }}>
-                          <small>{o.SupplierName}<br/>{o.SupplierID}</small>
-                        </td>
-                        <td style={{ borderColor: '#E8D7C8', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                          <Button 
-                            variant="outline-primary" 
-                            size="sm" 
-                            className="me-1 mb-1"
-                            onClick={() => handleEditClick(o)}
-                            style={{ borderColor: '#8B6F47', color: '#8B6F47', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
-                            title="編輯"
-                          >
-                            <PencilSquare />
-                          </Button>
-                          <Button 
-                            variant="outline-danger" 
-                            size="sm"
-                            className="mb-1"
-                            onClick={() => handleDelete(o.OrderNumber)}
-                            style={{ borderColor: '#C4A69D', color: '#C4A69D', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
-                            title="刪除"
-                          >
-                            <Trash />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredOrders.length === 0 && (
+              {loading ? (
+                <div className="text-center py-5">
+                  <Spinner animation="border" style={{ color: '#8B6F47' }} />
+                  <p className="mt-2" style={{ color: '#8B6F47' }}>資料載入中...</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover bordered striped className="align-middle mb-0" style={{ fontSize: '0.9rem', borderColor: '#E8D7C8', tableLayout: 'fixed' }}>
+                    <thead style={{ background: 'linear-gradient(135deg, #6B5437 0%, #7D5E42 100%)', color: 'white', fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                       <tr>
-                        <td colSpan="13" className="text-center py-4" style={{ color: '#8B6F47', fontWeight: '500' }}>
-                          查無符合的訂單資料
-                        </td>
+                        <th style={{ borderColor: '#E8D7C8', width: '5%', textAlign: 'center' }}>交餐</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '5%' }}>ID</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '10%' }}>身分證</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '7%' }}>姓名</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '10%' }}>訂餐日期</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '10%' }}>預計交餐</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '10%' }}>實際交餐</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '4%' }}>A</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '4%' }}>B</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '4%' }}>C</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '7%' }}>金額</th>
+                        <th style={{ borderColor: '#E8D7C8', width: '7%' }}>供應商</th>
+                        <th style={{ borderColor: '#E8D7C8', textAlign: 'center', width: '8%' }}>操作</th>
                       </tr>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.map((o) => (
+                        <tr key={o.OrderNumber} style={{ borderBottomColor: '#E8D7C8' }}>
+                          <td style={{ borderColor: '#E8D7C8', textAlign: 'center' }}>
+                            {o.ActualDeliveryDate ? (
+                              <CheckCircle 
+                                size={24} 
+                                style={{ color: '#28a745', cursor: 'default' }}
+                                title={`已交餐：${toDateValue(o.ActualDeliveryDate)} ${o.ActualDeliveryTime ? toTimeValue(o.ActualDeliveryTime) : ''}`}
+                              />
+                            ) : (
+                              <CheckCircle 
+                                size={24} 
+                                style={{ color: '#ccc', cursor: 'pointer', transition: 'color 0.2s' }}
+                                onClick={() => handleMarkDelivered(o.OrderNumber)}
+                                onMouseEnter={(e) => e.target.style.color = '#A67C52'}
+                                onMouseLeave={(e) => e.target.style.color = '#ccc'}
+                                title="點擊標記為已交餐"
+                              />
+                            )}
+                          </td>
+                          <td className="fw-bold" style={{ borderColor: '#E8D7C8' }}>{o.OrderNumber}</td>
+                          <td style={{ borderColor: '#E8D7C8' }}><small>{o.IDNumber}</small></td>
+                          <td style={{ borderColor: '#E8D7C8' }}>{o.CustomerName}</td>
+                          <td style={{ borderColor: '#E8D7C8' }}><small>{toDateValue(o.OrderDate)}</small></td>
+                          <td style={{ borderColor: '#E8D7C8' }}>
+                            <small>
+                              {toDateValue(o.ExpectedDeliveryDate)}<br/>
+                              {o.ExpectedDeliveryTime ? toTimeValue(o.ExpectedDeliveryTime) : '-'}
+                            </small>
+                          </td>
+                          <td style={{ borderColor: '#E8D7C8' }}>
+                            <small>
+                              {o.ActualDeliveryDate ? toDateValue(o.ActualDeliveryDate) : '-'}<br/>
+                              {o.ActualDeliveryTime ? toTimeValue(o.ActualDeliveryTime) : '-'}
+                            </small>
+                          </td>
+                          <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyA || 0}</td>
+                          <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyB || 0}</td>
+                          <td className="text-center" style={{ borderColor: '#E8D7C8' }}>{o.QtyC || 0}</td>
+                          <td className="text-end fw-bold" style={{ borderColor: '#E8D7C8', color: '#8B6F47' }}>
+                            ${o.OrderAmount}
+                          </td>
+                          <td style={{ borderColor: '#E8D7C8' }}>
+                            <small>{o.SupplierName}<br/>{o.SupplierID}</small>
+                          </td>
+                          <td style={{ borderColor: '#E8D7C8', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <Button 
+                              variant="outline-primary" 
+                              size="sm" 
+                              className="me-1 mb-1"
+                              onClick={() => handleEditClick(o)}
+                              style={{ borderColor: '#8B6F47', color: '#8B6F47', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
+                              title="編輯"
+                            >
+                              <PencilSquare />
+                            </Button>
+                            <Button 
+                              variant="outline-danger" 
+                              size="sm"
+                              className="mb-1"
+                              onClick={() => handleDelete(o.OrderNumber)}
+                              style={{ borderColor: '#C4A69D', color: '#C4A69D', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
+                              title="刪除"
+                            >
+                              <Trash />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredOrders.length === 0 && (
+                        <tr>
+                          <td colSpan="13" className="text-center py-4" style={{ color: '#8B6F47', fontWeight: '500' }}>
+                            查無符合的訂單資料
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>

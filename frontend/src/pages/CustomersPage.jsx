@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Table, Alert, Card, Row, Col, Spinner, Badge, InputGroup } from 'react-bootstrap';
-
 import { Search, PencilSquare, PlusCircle, Save, CheckCircle, XCircle, ClipboardData } from 'react-bootstrap-icons';
+import { API_CUSTOMERS_URL } from '../api/apiConfig';
 
-const API_BASE_URL = 'http://localhost:8080/api/customers';
+const API_BASE_URL = API_CUSTOMERS_URL;
 
 const CustomersPage = () => {
   
@@ -51,6 +51,24 @@ const CustomersPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // 輸入清理與限制
+    if (name === 'idNumber') {
+      // 身分證：轉大寫，只允許英數，長度最多 10
+      const cleaned = value
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 10);
+      setFormData(prev => ({ ...prev, idNumber: cleaned }));
+      return;
+    }
+
+    if (name === 'phone') {
+      // 電話：僅允許數字
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10); // 最多 10 位
+      setFormData(prev => ({ ...prev, phone: digitsOnly }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -72,6 +90,31 @@ const CustomersPage = () => {
       return;
     }
 
+    // 進階格式驗證
+    const idPattern = /^[A-Z][0-9]{9}$/; // 1 英文字 + 9 位數字
+    const phonePattern = /^[0-9]{8,10}$/; // 8~10 位數字
+
+    if (!idPattern.test(formData.idNumber)) {
+      setError('身分證格式需為 1 英文字 + 9 位數字');
+      return;
+    }
+
+    if (formData.phone && !phonePattern.test(formData.phone)) {
+      setError('電話號碼需為 8~10 位數字');
+      return;
+    }
+
+    // 檢查是否有重複身分證（新增時）
+    if (!isEditing) {
+      const exists = customers.some(
+        (c) => (c.IDNumber || '').toUpperCase() === formData.idNumber.toUpperCase()
+      );
+      if (exists) {
+        setError('此身分證已存在，無法新增。');
+        return;
+      }
+    }
+
     const url = isEditing ? `${API_BASE_URL}/update` : API_BASE_URL;
     const method = isEditing ? 'PUT' : 'POST';
 
@@ -81,10 +124,25 @@ const CustomersPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData), // 注意後端欄位對應
       });
-      const result = await res.json();
+      let result = null;
+      try {
+        result = await res.json();
+      } catch (_) {
+        // 無法解析 JSON，保持為 null
+      }
 
-      if (result.error) {
-        throw new Error(result.error);
+      if (!res.ok) {
+        if (res.status === 409) {
+          setError('身分證已存在，無法新增。');
+        } else {
+          setError((result && result.error) || '操作失敗');
+        }
+        return;
+      }
+
+      if (result && result.error) {
+        setError(result.error);
+        return;
       }
 
       setSuccessMsg(isEditing ? '修改成功！' : '新增成功！');
@@ -148,8 +206,8 @@ const CustomersPage = () => {
   return (
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ color: '#8B6F47', fontWeight: '700' }}>客戶管理系統</h1>
-        <Button variant="outline-secondary" href="/" style={{ borderColor: '#8B6F47', color: '#8B6F47', fontWeight: '600' }}>← 回首頁</Button>
+        <h1 style={{ color: 'var(--brand-1)', fontWeight: '700' }}>客戶管理</h1>
+        <Button variant="outline-secondary" href="/" style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', fontWeight: '600' }}>← 回首頁</Button>
       </div>
 
       {/* 訊息提示區 */}
@@ -159,11 +217,11 @@ const CustomersPage = () => {
       <Row className="g-4">
         {/* 左側：表單區域 */}
         <Col lg={4} className="mb-4">
-          <Card className="shadow-sm border-0" style={{ borderTop: '4px solid #8B6F47' }}>
-            <Card.Header style={{ background: 'linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%)', color: 'white', fontWeight: '600' }}>
+          <Card className="shadow-sm border-0 border-top-brand">
+            <Card.Header className="bg-gradient-brand" style={{ color: 'white', fontWeight: '600' }}>
               {isEditing ? <><PencilSquare className="me-2" />編輯客戶資料</> : <><PlusCircle className="me-2" />新增客戶</>}
             </Card.Header>
-            <Card.Body style={{ backgroundColor: '#FFFBF8' }}>
+            <Card.Body style={{ backgroundColor: 'var(--brand-bg-soft)' }}>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Label style={{ fontWeight: '600', color: '#8B6F47' }}>身分證字號 <span className="text-danger">*</span></Form.Label>
@@ -175,8 +233,14 @@ const CustomersPage = () => {
                     disabled={isEditing}
                     placeholder="請輸入身分證"
                     required
-                    style={{ borderColor: '#D4A574' }}
+                    maxLength={10}
+                    pattern="^[A-Za-z][0-9]{9}$"
+                    title="身分證格式：1 英文字 + 9 位數字"
+                    style={{ borderColor: 'var(--brand-accent)' }}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    身分證格式需為 1 英文字 + 9 位數字
+                  </Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -188,7 +252,7 @@ const CustomersPage = () => {
                     onChange={handleInputChange}
                     placeholder="請輸入姓名"
                     required
-                    style={{ borderColor: '#D4A574' }}
+                    style={{ borderColor: 'var(--brand-accent)' }}
                   />
                 </Form.Group>
 
@@ -200,8 +264,15 @@ const CustomersPage = () => {
                     value={formData.phone} 
                     onChange={handleInputChange}
                     placeholder="請輸入電話"
-                    style={{ borderColor: '#D4A574' }}
+                    inputMode="numeric"
+                    pattern="^[0-9]{8,10}$"
+                    maxLength={10}
+                    title="電話號碼需為 8~10 位數字"
+                    style={{ borderColor: 'var(--brand-accent)' }}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    電話號碼需為 8~10 位數字
+                  </Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-4">
@@ -212,7 +283,7 @@ const CustomersPage = () => {
                     value={formData.address} 
                     onChange={handleInputChange}
                     placeholder="請輸入地址"
-                    style={{ borderColor: '#D4A574' }}
+                    style={{ borderColor: 'var(--brand-accent)' }}
                   />
                 </Form.Group>
 
@@ -220,7 +291,8 @@ const CustomersPage = () => {
                   <Button 
                     variant="primary" 
                     type="submit"
-                    style={{ background: 'linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%)', border: 'none', fontWeight: '600' }}
+                    className="bg-gradient-brand"
+                    style={{ border: 'none', fontWeight: '600' }}
                   >
                     {isEditing ? <><Save className="me-2" />儲存修改</> : <><PlusCircle className="me-2" />新增客戶</>}
                   </Button>
@@ -241,24 +313,24 @@ const CustomersPage = () => {
 
         {/* 右側：列表區域 */}
         <Col lg={8}>
-          <Card className="shadow-sm border-0" style={{ borderTop: '4px solid #9D7E52' }}>
-            <Card.Header style={{ background: 'linear-gradient(135deg, #9D7E52 0%, #8B6F47 100%)', color: 'white', fontWeight: '600' }}>
+          <Card className="shadow-sm border-0 border-top-brand-2">
+            <Card.Header className="bg-gradient-brand" style={{ color: 'white', fontWeight: '600' }}>
               <ClipboardData className="me-2" />客戶列表
             </Card.Header>
-            <Card.Body style={{ backgroundColor: '#FFFBF8' }}>
+            <Card.Body style={{ backgroundColor: 'var(--brand-bg-soft)' }}>
               {/* 搜尋與篩選 */}
               <Row className="mb-4 align-items-center">
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroup.Text style={{ backgroundColor: '#F5EFEB', borderColor: '#D4A574' }}>
-                      <Search style={{ color: '#8B6F47' }} />
+                    <InputGroup.Text style={{ backgroundColor: '#F5EFEB', borderColor: 'var(--brand-accent)' }}>
+                      <Search style={{ color: 'var(--brand-1)' }} />
                     </InputGroup.Text>
                     <Form.Control
                       type="text"
                       placeholder="搜尋身分證或姓名..."
                       value={searchKeyword}
                       onChange={(e) => setSearchKeyword(e.target.value)}
-                      style={{ borderColor: '#D4A574' }}
+                      style={{ borderColor: 'var(--brand-accent)' }}
                     />
                   </InputGroup>
                 </Col>
@@ -268,7 +340,7 @@ const CustomersPage = () => {
                     size="sm"
                     className="me-2"
                     onClick={() => setFilterStatus('Active')}
-                    style={filterStatus === 'Active' ? { background: 'linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%)', border: 'none' } : {}}
+                    style={filterStatus === 'Active' ? { background: 'linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%)', border: 'none' } : {}}
                   >Active</Button>
                   <Button 
                     variant={filterStatus === 'Inactive' ? 'secondary' : 'outline-secondary'} 
@@ -292,33 +364,34 @@ const CustomersPage = () => {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <Table hover bordered className="mb-0" style={{ borderColor: '#E8D7C8', tableLayout: 'fixed' }}>
+                  <Table hover bordered className="mb-0 customers-table" style={{ borderColor: 'var(--brand-muted)', tableLayout: 'fixed' }}>
                     <thead style={{ background: 'linear-gradient(135deg, #6B5437 0%, #7D5E42 100%)', color: 'white', fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                      {/* 使用品牌深色漸層 */}
+                      
                       <tr>
-                        <th style={{ borderColor: '#E8D7C8', width: '15%' }}>身分證</th>
-                        <th style={{ borderColor: '#E8D7C8', width: '12%' }}>姓名</th>
-                        <th style={{ borderColor: '#E8D7C8', width: '13%' }}>電話</th>
-                        <th style={{ borderColor: '#E8D7C8', width: '28%' }}>地址</th>
-                        <th style={{ borderColor: '#E8D7C8', width: '12%' }}>狀態</th>
-                        <th style={{ borderColor: '#E8D7C8', textAlign: 'center', width: '20%' }}>操作</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '15%' }}>身分證</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '12%' }}>姓名</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '13%' }}>電話</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '28%' }}>地址</th>
+                        <th className="status-col" style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>狀態</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', width: '20%' }}>操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCustomers.length > 0 ? (
                         filteredCustomers.map((c) => (
-                      <tr key={c.IDNumber} style={{ opacity: c.ConsumptionStatus === 'Inactive' ? 0.6 : 1, borderBottomColor: '#E8D7C8' }}>
-                            <td style={{ borderColor: '#E8D7C8' }}>{c.IDNumber}</td>
-                            <td style={{ borderColor: '#E8D7C8' }}>{c.CustomerName}</td>
-                            <td style={{ borderColor: '#E8D7C8' }}>{c.Phone}</td>
-                            <td style={{ borderColor: '#E8D7C8' }}>{c.Address}</td>
+                      <tr key={c.IDNumber} style={{ opacity: c.ConsumptionStatus === 'Inactive' ? 0.6 : 1, borderBottomColor: 'var(--brand-muted)' }}>
+                            <td style={{ borderColor: 'var(--brand-muted)' }}>{c.IDNumber}</td>
+                            <td style={{ borderColor: 'var(--brand-muted)' }}>{c.CustomerName}</td>
+                            <td style={{ borderColor: 'var(--brand-muted)' }}>{c.Phone}</td>
+                            <td style={{ borderColor: 'var(--brand-muted)' }}>{c.Address}</td>
                             <td style={{ borderColor: '#E8D7C8' }}>
                               <Badge 
+                                className="status-badge"
                                 style={{ 
                                   background: c.ConsumptionStatus === 'Active' 
-                                    ? 'linear-gradient(135deg, #8B6F47 0%, #9D7E52 100%)' 
-                                    : '#999999',
-                                  fontSize: '0.9rem',
-                                  padding: '0.5em 0.9em',
+                                    ? 'linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%)' 
+                                    : 'var(--brand-gray)',
                                   fontWeight: '600',
                                   borderRadius: '20px'
                                 }}
@@ -326,31 +399,31 @@ const CustomersPage = () => {
                                 {c.ConsumptionStatus === 'Active' ? <><CheckCircle className="me-1" />活躍</> : <><XCircle className="me-1" />停用</>}
                               </Badge>
                             </td>
-                            <td style={{ borderColor: '#E8D7C8', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <td className="actions-col" style={{ borderColor: 'var(--brand-muted)', textAlign: 'center' }}>
                               <Button 
                                 size="sm" 
                                 variant="outline-primary" 
                                 className="me-1 mb-1"
                                 onClick={() => handleEdit(c)}
-                                style={{ borderColor: '#8B6F47', color: '#8B6F47', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                                style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
                                 onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
                                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                 title="編輯"
                               >
-                                <PencilSquare className="me-1" />編輯
+                                <PencilSquare className="me-1" />
                               </Button>
                               {c.ConsumptionStatus === 'Active' ? (
                                 <Button 
                                   size="sm" 
-                                  variant="outline-danger" 
+                                  variant="outline-danger"
                                   className="mb-1"
                                   onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
-                                  style={{ borderColor: '#C4A69D', color: '#C4A69D', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                                  style={{ color: 'var(--brand-danger-outline)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
                                   onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
                                   onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                   title="停用"
                                 >
-                                  <XCircle className="me-1" />停用
+                                  <XCircle className="me-1" />
                                 </Button>
                               ) : (
                                 <Button 
@@ -358,12 +431,12 @@ const CustomersPage = () => {
                                   variant="outline-success" 
                                   className="mb-1"
                                   onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
-                                  style={{ borderColor: '#8B6F47', color: '#8B6F47', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                                  style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
                                   onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
                                   onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                   title="啟用"
                                 >
-                                  <CheckCircle className="me-1" />啟用
+                                  <CheckCircle className="me-1"  />
                                 </Button>
                               )}
                             </td>
@@ -371,7 +444,7 @@ const CustomersPage = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="6" className="text-center py-4" style={{ color: '#8B6F47', fontWeight: '500' }}>
+                          <td colSpan="6" className="text-center py-4" style={{ color: 'var(--brand-1)', fontWeight: '500' }}>
                             {filteredCustomers.length === 0 && searchKeyword ? '查無符合的客戶資料' : '暫無客戶資料，請新增'}
                           </td>
                         </tr>
