@@ -1,15 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/microsoft/go-mssqldb"
 	"github.com/rs/cors"
+	"golang.org/x/term"
 )
 
 // ===== 資料結構 =====
@@ -50,24 +56,6 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
-}
-
-// ===== CORS 中間件 =====
-
-func enableCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Max-Age", "86400")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }
 
 // ===== 客戶 API =====
@@ -469,9 +457,9 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 驗證狀態值是否有效 (Active 或 Inactive)
-	if payload.Status != "Active" && payload.Status != "Inactive" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "無效的狀態值，只允許 Active 或 Inactive"})
+	// 只允許改成 Active，不接受其他字串
+	if payload.Status != "Active" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "只允許將狀態設為 Active"})
 		return
 	}
 
@@ -496,6 +484,33 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // ===== 小工具：空字串轉 NULL =====
+func prompt(reader *bufio.Reader, label string, def string) (string, error) {
+	if def != "" {
+		fmt.Printf("%s (預設: %s): ", label, def)
+	} else {
+		fmt.Printf("%s: ", label)
+	}
+
+	s, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return def, nil
+	}
+	return s, nil
+}
+
+func promptPassword(label string) (string, error) {
+	fmt.Printf("%s: ", label)
+	b, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(b)), nil
+}
 
 func nullOrString(s string) interface{} {
 	if s == "" {
@@ -509,10 +524,48 @@ func nullOrString(s string) interface{} {
 func main() {
 	// 連線字串：依你實際環境調整
 	// 例：local SQL Express：
-	// connStr := "server=localhost\\SQLEXPRESS;user id=finaluser;password=user!12345;database=FinalProject;encrypt=disable"
-	connStr := "server=100.81.26.68;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
+	// connStr := "server=localhost\\SQLEXPRESS;user id=appuser;password=AppUser!12345;database=CustomerOrderDB;encrypt=disable"
 
-	var err error
+	//connStr := "server=localhost;port=1433;user id=finaluser;password=user!12345;database=期末專題;encrypt=disable"
+	reader := bufio.NewReader(os.Stdin)
+
+	server, err := prompt(reader, "SQL Server host", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	port, err := prompt(reader, "SQL Server port", "1433")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user, err := prompt(reader, "SQL Server username", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if user == "" {
+		log.Fatal("username 不可為空")
+	}
+
+	pass, err := promptPassword("SQL Server password (不回顯)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if pass == "" {
+		log.Fatal("password 不可為空")
+	}
+
+	dbName, err := prompt(reader, "Database name", "期末專題")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 組連線字串（注意：不要把密碼 log 出來）
+	connStr := fmt.Sprintf(
+		"server=%s;port=%s;user id=%s;password=%s;database=%s;encrypt=disable",
+		server, port, user, pass, dbName,
+	)
+	//var err error
 	db, err = sql.Open("sqlserver", connStr)
 	if err != nil {
 		log.Fatal("Open DB error:", err)
@@ -529,19 +582,17 @@ func main() {
 	router.HandleFunc("/api/customers/update", handleUpdateCustomer)
 	router.HandleFunc("/api/customers/delete", handleDeleteCustomer)
 	router.HandleFunc("/api/customers/status", updateCustomerStatus)
-	// API:order
 
+	// API:order
 	router.HandleFunc("/api/orders", handleGetOrders).Methods("GET")
 	router.HandleFunc("/api/orders", handlePostOrder).Methods("POST")
 	router.HandleFunc("/api/orders/update", handleUpdateOrder)
 	router.HandleFunc("/api/orders/delete", handleDeleteOrder)
 
-	// // 靜態檔案：./public 底下
+	// 靜態檔案：./public 底下
 	// publicDir := filepath.Join(".", "public")
-	////  fs := http.FileServer(http.Dir(publicDir))//
-	// http.Handle("/", fs) // 直接讓 / 對應到 public// /
-
-	// 啟用 CORS（允許從 React 開發伺服器 http://localhost:3000 與 http://127.0.0.1:3000 訪問）
+	// fs := http.FileServer(http.Dir(publicDir))
+	// http.Handle("/", fs) // 直接讓 / 對應到 public/
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -552,7 +603,7 @@ func main() {
 	// Use the mux router with CORS, not the default serve mux
 	handler := c.Handler(router)
 
-	log.Println("🚀 伺服器啟動於 http://localhost:8080 (CORS 已啟用)")
+	log.Println("🚀 伺服器啟動於 http://localhost:8080 ")
 	if err := http.ListenAndServe(":8080", handler); err != nil {
 		log.Fatal("ListenAndServe error:", err)
 	}
