@@ -11,7 +11,9 @@ user!12345
 期末專題
 ```
 
+
 啟動前端
+先另開一個terminal
 ```
- npm start
+ cd frontend; npm install; npm start
 ```
