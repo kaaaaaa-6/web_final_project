@@ -5,7 +5,7 @@ go 1.25.4
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/microsoft/go-mssqldb v1.9.5
-	github.com/rs/cors v1.10.1
+	github.com/rs/cors v1.11.1
 	golang.org/x/term v0.38.0
 )
 

@@ -435,52 +435,6 @@ func handleDeleteOrder(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "刪除訂單成功"})
 }
-
-// 交餐標記
-func handleMarkDelivered(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	var body struct {
-		OrderNumber int    `json:"orderNumber"`
-		ActualDate  string `json:"actualDate"`
-		ActualTime  string `json:"actualTime"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		log.Println("標記交餐解析錯誤:", err)
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "請求格式錯誤"})
-		return
-	}
-
-	if body.OrderNumber == 0 || body.ActualDate == "" || body.ActualTime == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "訂單編號、交餐日期和時間為必填"})
-		return
-	}
-
-	log.Println("👉 標記訂單已交餐:", body.OrderNumber, body.ActualDate, body.ActualTime)
-
-	// ✨ 直接更新資料庫，不需要 Stored Procedure
-	_, err := db.Exec(`
-		UPDATE CustomerOrderRecord
-		SET ActualDeliveryDate = @p1,
-		    ActualDeliveryTime = @p2
-		WHERE OrderNumber = @p3`,
-		body.ActualDate,
-		body.ActualTime,
-		body.OrderNumber,
-	)
-	if err != nil {
-		log.Println("標記交餐失敗:", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "標記交餐失敗：" + err.Error()})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{"message": "標記交餐成功"})
-}
-
 func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -527,6 +481,51 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 		"message": "狀態更新成功",
 		"rows":    rows,
 	})
+}
+
+// 交餐標記
+func handleMarkDelivered(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body struct {
+		OrderNumber int    `json:"orderNumber"`
+		ActualDate  string `json:"actualDate"`
+		ActualTime  string `json:"actualTime"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		log.Println("標記交餐解析錯誤:", err)
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "請求格式錯誤"})
+		return
+	}
+
+	if body.OrderNumber == 0 || body.ActualDate == "" || body.ActualTime == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "訂單編號、交餐日期和時間為必填"})
+		return
+	}
+
+	log.Println("👉 標記訂單已交餐:", body.OrderNumber, body.ActualDate, body.ActualTime)
+
+	// ✨ 直接更新資料庫，不需要 Stored Procedure
+	_, err := db.Exec(`
+		UPDATE CustomerOrderRecord
+		SET ActualDeliveryDate = @p1,
+		    ActualDeliveryTime = @p2
+		WHERE OrderNumber = @p3`,
+		body.ActualDate,
+		body.ActualTime,
+		body.OrderNumber,
+	)
+	if err != nil {
+		log.Println("標記交餐失敗:", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "標記交餐失敗：" + err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "標記交餐成功"})
 }
 
 // ===== 小工具：空字串轉 NULL =====
@@ -621,6 +620,33 @@ func main() {
 	}
 	log.Println("✅ 已連線到 SQL Server")
 
+	// // API: 客戶
+	// http.HandleFunc("/api/customers", func(w http.ResponseWriter, r *http.Request) {
+	// 	// 簡單區分 GET / POST
+	// 	if r.Method == http.MethodGet {
+	// 		handleGetCustomers(w, r)
+	// 	} else if r.Method == http.MethodPost {
+	// 		handlePostCustomer(w, r)
+	// 	} else {
+	// 		w.WriteHeader(http.StatusMethodNotAllowed)
+	// 	}
+	// })
+	// http.HandleFunc("/api/customers/update", handleUpdateCustomer)
+
+	// // API: 訂單
+	// http.HandleFunc("/api/orders", func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.Method == http.MethodGet {
+	// 		handleGetOrders(w, r)
+	// 	} else if r.Method == http.MethodPost {
+	// 		handlePostOrder(w, r)
+	// 	} else {
+	// 		w.WriteHeader(http.StatusMethodNotAllowed)
+	// 	}
+	// })
+	// http.HandleFunc("/api/orders/update", handleUpdateOrder)
+	// http.HandleFunc("/api/customers/delete", handleDeleteCustomer)
+	// http.HandleFunc("/api/orders/delete", handleDeleteOrder)
+	// http.HandleFunc("/api/customers/status", updateCustomerStatus)
 	router := mux.NewRouter()
 	// API:customer
 	router.HandleFunc("/api/customers", handleGetCustomers).Methods("GET")
