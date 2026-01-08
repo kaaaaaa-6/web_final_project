@@ -3,7 +3,7 @@ import {
   Container, Row, Col, Form, Button, Table, Card, Badge, 
   InputGroup, Spinner, OverlayTrigger, Tooltip, Toast, ToastContainer, Breadcrumb 
 } from 'react-bootstrap';
-import { Trash, PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check, XCircle} from 'react-bootstrap-icons';
+import { PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check, XCircle} from 'react-bootstrap-icons';
 
 
 const API_BASE_URL = "http://localhost:8080/api/customers";

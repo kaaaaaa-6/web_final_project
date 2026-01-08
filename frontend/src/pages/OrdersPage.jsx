@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Container, Row, Col, Form, Button, Table, Card, Badge, 
+  Container, Row, Col, Form, Button, Table, Card, 
   InputGroup, Spinner, OverlayTrigger, Tooltip, Toast, ToastContainer, Breadcrumb 
 } from 'react-bootstrap';
-import { Trash, PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check } from 'react-bootstrap-icons';
+import { Trash, PencilSquare, PlusCircle, Save, ClipboardData, Search, Check } from 'react-bootstrap-icons';
 
 const API_Orders_URL = "http://localhost:8080/api/orders";
 

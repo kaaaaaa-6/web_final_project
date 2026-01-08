@@ -1,9 +1,9 @@
-﻿IF DB_ID(N'期末專題') IS NULL
+﻿IF DB_ID(N'測試用1') IS NULL
 BEGIN
-    CREATE DATABASE [期末專題];
+    CREATE DATABASE [測試用1];
 END
 GO
-USE [期末專題];
+USE [測試用1];
 GO
 CREATE TABLE CustomerBasicInfo (
     IDNumber           CHAR(10)       NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE CustomerBasicInfo (
 GO
 CREATE TABLE CustomerOrderRecord (
     --- OrderNumber            INT            NOT NULL,
-	OrderNumber INT IDENTITY(1,1) NOT NULL
+	OrderNumber INT IDENTITY(1,1) NOT NULL,
     IDNumber               CHAR(10)       NOT NULL,
     OrderDate              DATE           NOT NULL,
     ExpectedDeliveryDate   DATE           NOT NULL,
@@ -272,5 +272,34 @@ BEGIN
     -- 再刪客戶本身
     DELETE FROM CustomerBasicInfo
     WHERE IDNumber = @IDNumber;
+END;
+GO
+CREATE TRIGGER TR_Customer_SoftDelete
+ON CustomerBasicInfo
+INSTEAD OF DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE c
+    SET ConsumptionStatus = N'Inactive'
+    FROM CustomerBasicInfo c
+    JOIN deleted d ON c.IDNumber = d.IDNumber;
+END;
+GO
+CREATE TRIGGER TR_Order_CalcAmount
+ON CustomerOrderRecord
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE o
+    SET o.OrderAmount = i.QtyA * 100
+                       + i.QtyB * 150
+                       + i.QtyC * 200
+    FROM CustomerOrderRecord o
+    JOIN inserted i
+      ON o.OrderNumber = i.OrderNumber;
 END;
 GO
