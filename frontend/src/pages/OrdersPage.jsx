@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Table, Card, Alert, Badge, InputGroup, Spinner } from 'react-bootstrap';
+import { 
+  Container, Row, Col, Form, Button, Table, Card, Badge, 
+  InputGroup, Spinner, OverlayTrigger, Tooltip, Toast, ToastContainer, Breadcrumb 
+} from 'react-bootstrap';
 import { Trash, PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check } from 'react-bootstrap-icons';
-
 
 const API_Orders_URL = "http://localhost:8080/api/orders";
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
+  const [sortConfig, setSortConfig] = useState({ key: 'OrderNumber', direction: 'desc' });
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     orderCustomerId: '',
@@ -23,6 +26,15 @@ const OrdersPage = () => {
   const [keyword, setKeyword] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' }); 
   const [deliverFilter, setDeliverFilter] = useState('All'); 
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ type: 'success', text: '' });
+
+  // 封裝一個顯示 Toast 的函式
+  const showNotify = (type, text) => {
+    setToastMessage({ type, text });
+    setShowToast(true);
+  };
+
 
   // 日期時間格式化
   const toDateValue = (dateStr) => {
@@ -150,14 +162,14 @@ const OrdersPage = () => {
       const result = await res.json();
 
       if (result.error) {
-        setMessage({ type: 'danger', text: result.error });
+        showNotify('danger', result.error);
       } else {
-        setMessage({ type: 'success', text: editingId ? '修改成功' : '新增成功' });
+        showNotify('success', editingId ? '修改成功' : '新增成功');
         resetForm();
         loadOrders();
       }
     } catch (err) {
-      setMessage({ type: 'danger', text: '系統錯誤，請稍後再試' });
+      showNotify('danger', '系統錯誤，請稍後再試');
     }
   };
 
@@ -170,14 +182,17 @@ const OrdersPage = () => {
       const result = await res.json();
       
       if (result.error) {
-        setMessage({ type: 'danger', text: result.error });
+        // setMessage({ type: 'danger', text: result.error });
+        showNotify('danger', result.error);
       } else {
-        setMessage({ type: 'success', text: '刪除成功' });
+        // setMessage({ type: 'success', text: '刪除成功' });
+        showNotify('success', '訂單已成功刪除');
         if (editingId === orderNumber) resetForm();
         loadOrders();
       }
     } catch (err) {
-      setMessage({ type: 'danger', text: '刪除失敗' });
+      // setMessage({ type: 'danger', text: '刪除失敗' });
+      showNotify('danger', '網路錯誤，刪除失敗');
     }
   };
 
@@ -202,46 +217,106 @@ const OrdersPage = () => {
       const result = await res.json();
       
       if (!res.ok || result.error) {
-        setMessage({ type: 'danger', text: result.error || '標記失敗，請稍後再試' });
+        showNotify('danger', result.error || '標記失敗');
         console.error('標記交餐錯誤:', result);
       } else {
-        setMessage({ type: 'success', text: '已標記交餐成功！' });
+        showNotify('success', '已標記交餐成功！');
         loadOrders();
       }
     } catch (err) {
       console.error('標記交餐失敗:', err);
-      setMessage({ type: 'danger', text: '標記失敗，請檢查網路連線' });
+      showNotify('danger', '標記失敗，請檢查網路連線');
     }
+  };
+
+  // 處理排序點擊=========
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // 顯示排序指標==========
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) {
+      return <i className="fa-solid fa-sort ms-1 opacity-25"></i>;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <i className="fa-solid fa-sort-up ms-1 text-primary"></i> 
+      : <i className="fa-solid fa-sort-down ms-1 text-primary"></i>;
   };
 
   
   // 搜尋過濾
-  const filteredOrders = orders.filter(o => {
-    const kw = keyword.trim().toLowerCase();
-    const matchKeyword = kw
-      ? ((o.IDNumber || '').toLowerCase().includes(kw) || (o.CustomerName || '').toLowerCase().includes(kw))
-      : true;
-    const delivered = !!o.ActualDeliveryDate;
-    const matchDeliver =
-      deliverFilter === 'All' ||
-      (deliverFilter === 'Delivered' && delivered) ||
-      (deliverFilter === 'Undelivered' && !delivered);
-    return matchKeyword && matchDeliver;
-  });
+  const filteredOrders = orders
+    .filter(o => {
+      const kw = keyword.trim().toLowerCase();
+      const matchKeyword = kw
+        ? ((o.IDNumber || '').toLowerCase().includes(kw) || (o.CustomerName || '').toLowerCase().includes(kw))
+        : true;
+      const delivered = !!o.ActualDeliveryDate;
+      const matchDeliver =
+        deliverFilter === 'All' ||
+        (deliverFilter === 'Delivered' && delivered) ||
+        (deliverFilter === 'Undelivered' && !delivered);
+      return matchKeyword && matchDeliver;
+    })
+    .sort((a, b) => {
+      const key = sortConfig.key;
+      if (!key) return 0;
+    
+      let valA = a[key] || "";
+      let valB = b[key] || "";
+    
+      // 如果是數字類型（如金額、訂單編號）
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+      }
+    
+      // 如果是字串類型（如姓名、地址、身分證）
+      const comparison = valA.toString().localeCompare(valB.toString(), 'zh-Hant');
+      
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
+    });
 
   return (
     <Container className="py-5">
+      {/* --- 麵包屑導航--- */}
+      <Breadcrumb className="mb-4">
+        <Breadcrumb.Item href="/">首頁</Breadcrumb.Item>
+        <Breadcrumb.Item active>訂單管理</Breadcrumb.Item>
+      </Breadcrumb>
+      {/* --- 浮動通知容器 --- */}
+      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+        <Toast 
+          bg={toastMessage.type} 
+          show={showToast} 
+          onClose={() => setShowToast(false)} 
+          delay={3000} 
+          autohide
+        >
+          <Toast.Header>
+            <strong className="me-auto">系統通知</strong>
+          </Toast.Header>
+          <Toast.Body className={['danger', 'success', 'primary'].includes(toastMessage.type) ? 'text-white' : ''}>
+            {toastMessage.text}
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 style={{ color: 'var(--brand-1)', fontWeight: '700' }}>訂單管理</h1>
         <Button variant="outline-secondary" href="/" style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', fontWeight: '600' }}>← 回首頁</Button>
       </div>
 
       {/* 訊息提示區塊  */}
-      {message.text && (
+      {/* {message.text && (
         <Alert variant={message.type} onClose={() => setMessage({ type: '', text: '' })} dismissible>
           {message.text}
         </Alert>
-      )}
+      )} */}
 
       <Row className="g-4">
         {/* 左側：表單區域 */}
@@ -416,11 +491,36 @@ const OrdersPage = () => {
                     <thead className="bg-gradient-table-header" style={{ fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                       <tr>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '5%', textAlign: 'center' }}>交餐</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '5%' }}>ID</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>身分證</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '7%' }}>姓名</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>訂餐日期</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>預計交餐</th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '5%', cursor: 'pointer' }}
+                          onClick={() => requestSort('OrderNumber')}
+                        >
+                          ID {getSortIndicator('OrderNumber')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '10%', cursor: 'pointer' }}
+                          onClick={() => requestSort('IDNumber')}
+                        >
+                          身分證 {getSortIndicator('IDNumber')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '7%', cursor: 'pointer' }}
+                          onClick={() => requestSort('CustomerName')}
+                        >
+                          姓名 {getSortIndicator('CustomerName')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '10%', cursor: 'pointer' }}
+                          onClick={() => requestSort('OrderDate')}
+                        >
+                          訂餐日期 {getSortIndicator('OrderDate')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '10%', cursor: 'pointer' }}
+                          onClick={() => requestSort('ExpectedDeliveryDate')}
+                        >
+                          預計交餐 {getSortIndicator('ExpectedDeliveryDate')}
+                        </th>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>實際交餐</th>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '4%' }}>A</th>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '4%' }}>B</th>
@@ -435,44 +535,54 @@ const OrdersPage = () => {
                         <tr key={o.OrderNumber} style={{ borderBottomColor: 'var(--brand-muted)' }}>
                           <td style={{ borderColor: 'var(--brand-muted)', textAlign: 'center' }}>
                             {o.ActualDeliveryDate ? (
-                              <span
-                                title={`已交餐：${toDateValue(o.ActualDeliveryDate)} ${o.ActualDeliveryTime ? toTimeValue(o.ActualDeliveryTime) : ''}`}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: '50%',
-                                  backgroundColor: 'var(--state-success-bg)',
-                                  boxShadow: '0 0 0 2px var(--state-success-bg) inset',
-                                  cursor: 'default'
-                                }}
+                              /* 情況 A：已交餐 - 顯示交餐日期提示 */
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip id={`delivered-${o.OrderNumber}`}>已於 {toDateValue(o.ActualDeliveryDate)} 交餐</Tooltip>}
                               >
-                                <Check size={16} color={'var(--state-success-fg)'} />
-                              </span>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    backgroundColor: 'var(--state-success-bg)',
+                                    boxShadow: '0 0 0 2px var(--state-success-bg) inset',
+                                    cursor: 'default'
+                                  }}
+                                >
+                                  <Check size={16} color={'var(--state-success-fg)'} />
+                                </span>
+                              </OverlayTrigger>
                             ) : (
-                              <span
-                                role="button"
-                                title="點擊標記為已交餐"
-                                onClick={() => handleMarkDelivered(o.OrderNumber)}
-                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--accent-bg)'; e.currentTarget.style.borderColor = 'var(--accent-bg)'; e.currentTarget.style.color = 'var(--text-on-primary)'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--state-neutral-icon)'; e.currentTarget.style.color = 'var(--state-neutral-icon)'; }}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: 24,
-                                  height: 24,
-                                  borderRadius: '50%',
-                                  border: '2px solid var(--state-neutral-icon)',
-                                  color: 'var(--state-neutral-icon)',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s'
-                                }}
+                              /* 情況 B：未交餐 - 顯示「點擊標記」提示 */
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip id={`mark-${o.OrderNumber}`}>點擊標記為已交餐</Tooltip>}
                               >
-                                <Check size={16} />
-                              </span>
+                                <span
+                                  role="button"
+                                  onClick={() => handleMarkDelivered(o.OrderNumber)}
+                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--accent-bg)'; e.currentTarget.style.borderColor = 'var(--accent-bg)'; e.currentTarget.style.color = 'var(--text-on-primary)'; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--state-neutral-icon)'; e.currentTarget.style.color = 'var(--state-neutral-icon)'; }}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    border: '2px solid var(--state-neutral-icon)',
+                                    color: 'var(--state-neutral-icon)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  <Check size={16} />
+                                </span>
+                              </OverlayTrigger>
                             )}
                           </td>
                           <td className="fw-bold" style={{ borderColor: 'var(--brand-muted)' }}>{o.OrderNumber}</td>
@@ -501,26 +611,29 @@ const OrdersPage = () => {
                             <small>{o.SupplierName}<br/>{o.SupplierID}</small>
                           </td>
                           <td style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                            <Button 
-                              variant="outline-primary" 
-                              size="sm" 
-                              className="me-1 mb-1"
-                              onClick={() => handleEditClick(o)}
-                              style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
-                              title="編輯"
-                            >
-                              <PencilSquare />
-                            </Button>
-                            <Button 
-                              variant="outline-danger" 
-                              size="sm"
-                              className="mb-1"
-                              onClick={() => handleDelete(o.OrderNumber)}
-                              style={{ borderColor: 'var(--brand-danger-outline)', color: 'var(--brand-danger-outline)', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
-                              title="刪除"
-                            >
-                              <Trash />
-                            </Button>
+                            <OverlayTrigger placement="top" overlay={<Tooltip>修改訂單內容</Tooltip>}>
+                              <Button 
+                                variant="outline-primary" 
+                                size="sm" 
+                                className="me-1 mb-1"
+                                onClick={() => handleEditClick(o)}
+                                style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.4rem', fontSize: '0.875rem' }}
+                                title="編輯"
+                              >
+                                <PencilSquare />
+                              </Button>
+                            </OverlayTrigger>
+                            <OverlayTrigger placement="top" overlay={<Tooltip>刪除此筆訂單</Tooltip>}>
+                              <Button 
+                                variant="outline-danger" 
+                                size="sm"
+                                className="mb-1"
+                                onClick={() => handleDelete(o.OrderNumber)}
+                                style={{ borderColor: 'var(--brand-danger-outline)', color: 'var(--brand-danger-outline)' }}
+                              >
+                                <Trash />
+                              </Button>
+                            </OverlayTrigger>
                           </td>
                         </tr>
                       ))}

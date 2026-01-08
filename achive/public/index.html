@@ -3,33 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>期末專題首頁</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <style>
-    :root {
-      --bg-color: #f5f7fa;
-      --container-bg: white;
-      --text-color: #333;
-      --link-bg: #007bff;
-      --link-hover: #0056c7;
-      --btn-toggle-bg: #6c757d;
-    }
-
-    [data-theme="dark"] {
-      --bg-color: #1a1a1a;
-      --container-bg: #2d2d2d;
-      --text-color: #f5f7fa;
-      --link-bg: #375a7f;
-      --link-hover: #2b4764;
-      --btn-toggle-bg: #f39c12; 
-    }
-
     body {
       font-family: "Microsoft JhengHei", sans-serif;
-      /* background: #f5f7fa; */
-      background: var(--bg-color);
-      color: var(--text-color);
-      transition: 0.3s;
+      background: #f5f7fa;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -38,8 +16,7 @@
     }
 
     .container {
-      /* background: white; */
-      background: var(--container-bg);
+      background: white;
       padding: 40px 50px;
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -50,20 +27,7 @@
     h1 {
       margin-bottom: 25px;
       font-size: 24px;
-      /* color: #333; */
-      color: var(--text-color);
-    }
-
-    #themeToggle {
-      margin-bottom: 25px;
-      padding: 8px 15px;
-      cursor: pointer;
-      background: var(--btn-toggle-bg);
-      color: white;
-      border: none;
-      border-radius: 20px;
-      font-size: 14px;
-      transition: 0.3s;
+      color: #333;
     }
 
     .menu {
@@ -79,8 +43,7 @@
     .menu a {
       display: block;
       padding: 12px 20px;
-      /* background: #007bff; */
-      background: var(--link-bg);
+      background: #007bff;
       color: white;
       border-radius: 8px;
       font-size: 18px;
@@ -89,8 +52,7 @@
     }
 
     .menu a:hover {
-      /* background: #0056c7; */
-      background: var(--link-hover);
+      background: #0056c7;
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
@@ -101,40 +63,13 @@
 <body>
 
   <div class="container">
-
     <h1>客戶訂餐管理系統</h1>
 
     <ul class="menu">
       <li><a href="customers.html">客戶管理</a></li>
       <li><a href="orders.html">訂單管理</a></li>
     </ul>
-
-    <button id="themeToggle" style="margin-bottom: 20px; padding: 5px 10px; cursor: pointer;">
-      <i class="fa-regular fa-moon"></i>模式切換
-    </button>
   </div>
-  
-  <script>
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.documentElement; // 取得 html 標籤
-  
-    // 1. 檢查 localStorage 是否已有設定
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      body.setAttribute('data-theme', savedTheme);
-    }
-  
-    // 2. 點擊切換
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = body.getAttribute('data-theme');
-      if (currentTheme === 'dark') {
-        body.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'light');
-      } else {
-        body.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-      }
-    });
-  </script>
+
 </body>
 </html>

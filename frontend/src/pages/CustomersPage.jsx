@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Form, Button, Table, Alert, Card, Row, Col, Spinner, Badge, InputGroup } from 'react-bootstrap';
-import { Search, PencilSquare, PlusCircle, Save, CheckCircle, XCircle, ClipboardData } from 'react-bootstrap-icons';
+import { 
+  Container, Row, Col, Form, Button, Table, Card, Badge, 
+  InputGroup, Spinner, OverlayTrigger, Tooltip, Toast, ToastContainer, Breadcrumb 
+} from 'react-bootstrap';
+import { Trash, PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check, XCircle} from 'react-bootstrap-icons';
 
 
 const API_BASE_URL = "http://localhost:8080/api/customers";
@@ -12,9 +15,18 @@ const CustomersPage = () => {
   const [error, setError] = useState(null);      //  錯誤訊息處理
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 搜尋與篩選狀態
+  // 搜尋與排序篩選狀態
   const [filterStatus, setFilterStatus] = useState('Active');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ type: 'success', text: '' });
+
+  // 封裝顯示 Toast 的函式
+  const showNotify = (type, text) => {
+    setToastMessage({ type, text });
+    setShowToast(true);
+  };
 
   // 表單狀態
   const [isEditing, setIsEditing] = useState(false);
@@ -39,7 +51,7 @@ const CustomersPage = () => {
       setCustomers(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError('無法連線到伺服器，請稍後再試。');
+      showNotify('danger', '無法連線到伺服器');
     } finally {
       setLoading(false);
     }
@@ -131,9 +143,10 @@ const CustomersPage = () => {
 
       if (!res.ok) {
         if (res.status === 409) {
-          setError('身分證已存在，無法新增。');
+          showNotify('danger', '身分證已存在，無法新增。');
+          // setError('身分證已存在，無法新增。');
         } else {
-          setError((result && result.error) || '操作失敗');
+          showNotify('danger', '操作失敗');
         }
         return;
       }
@@ -143,11 +156,11 @@ const CustomersPage = () => {
         return;
       }
 
-      setSuccessMsg(isEditing ? '修改成功！' : '新增成功！');
+      showNotify('success', isEditing ? '修改成功！' : '新增成功！');
       fetchCustomers(); // 重新整理列表
       resetForm();
     } catch (err) {
-      setError(err.message || '操作失敗');
+      showNotify('danger', '系統錯誤：' + err.message);
     }
   };
 
@@ -174,7 +187,7 @@ const CustomersPage = () => {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const res = await fetch(`/api/customers/status`, {
+      const res = await fetch(`${API_BASE_URL}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idnumber: id, status: newStatus })
@@ -182,35 +195,92 @@ const CustomersPage = () => {
       const result = await res.json();
       if(result.error) throw new Error(result.error);
       
-      setSuccessMsg(newStatus === 'Active' ? '啟用成功' : '停用成功');
+      // setSuccessMsg(newStatus === 'Active' ? '啟用成功' : '停用成功');
+      const msg = currentStatus === 'Active' ? '客戶已停用' : '客戶已啟用';
+      showNotify('success', msg);
       fetchCustomers();
     } catch(err) {
-      setError((newStatus === 'Active' ? '啟用' : '停用') + '失敗: ' + err.message);
+      showNotify('danger', '狀態更新失敗: ' + err.message);
     }
   };
 
+  //處理排序點擊===========
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  // 顯示排序指標 (小圖示)===========
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) {
+      return <i className="fa-solid fa-sort ms-1 opacity-25"></i>;
+    } 
+    return sortConfig.direction === 'asc' 
+      ? <i className="fa-solid fa-sort-up ms-1 text-primary"></i> 
+      : <i className="fa-solid fa-sort-down ms-1 text-primary"></i>;
+  };
 
-  //資料篩選===========
-  const filteredCustomers = customers.filter(c => {
+  //資料篩選 + 排序===========
+  const filteredCustomers = customers
+  .filter(c => {
     const matchStatus = filterStatus === 'All' || c.ConsumptionStatus === filterStatus;
     const matchSearch = 
       (c.IDNumber && c.IDNumber.toLowerCase().includes(searchKeyword.toLowerCase())) ||
       (c.CustomerName && c.CustomerName.toLowerCase().includes(searchKeyword.toLowerCase()));
     return matchStatus && matchSearch;
+  })
+  .sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    const valA = (a[sortConfig.key] || "").toString();
+    const valB = (b[sortConfig.key] || "").toString();
+
+    if (sortConfig.direction === 'asc') {
+      return valA.localeCompare(valB, 'zh-Hant');
+    } else {
+      return valB.localeCompare(valA, 'zh-Hant');
+    }
   });
 
 
   //Render 畫面===========
   return (
     <Container className="py-5">
+      {/* 麵包屑導航 */}
+      <Breadcrumb className="mb-4">
+        <Breadcrumb.Item href="/">首頁</Breadcrumb.Item>
+        <Breadcrumb.Item active>客戶管理</Breadcrumb.Item>
+      </Breadcrumb>
+
+      {/* Toast 容器 (固定在右上角) */}
+      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+        <Toast 
+          bg={toastMessage.type} 
+          show={showToast} 
+          onClose={() => setShowToast(false)} 
+          delay={3000} 
+          autohide
+        >
+          <Toast.Header>
+            <strong className="me-auto">系統通知</strong>
+          </Toast.Header>
+          <Toast.Body className={['danger', 'success', 'primary'].includes(toastMessage.type) ? 'text-white' : ''}>
+            {toastMessage.text}
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 style={{ color: 'var(--brand-1)', fontWeight: '700' }}>客戶管理</h1>
         <Button variant="outline-secondary" href="/" style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', fontWeight: '600' }}>← 回首頁</Button>
       </div>
 
-      {/* 訊息提示區 */}
+      {/* 訊息提示區
       {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-      {successMsg && <Alert variant="success" onClose={() => setSuccessMsg('')} dismissible>{successMsg}</Alert>}
+      {successMsg && <Alert variant="success" onClose={() => setSuccessMsg('')} dismissible>{successMsg}</Alert>} */}
 
       <Row className="g-4">
         {/* 左側：表單區域 */}
@@ -375,10 +445,30 @@ const CustomersPage = () => {
                       {/* 使用品牌深色漸層 */}
                       
                       <tr>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '15%' }}>身分證</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '12%' }}>姓名</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '15%' }}>電話</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '30%' }}>地址</th>
+                        <th 
+                        style={{ borderColor: 'var(--brand-muted)', width: '15%', cursor: 'pointer' }}
+                        onClick={() => requestSort('IDNumber')}
+                      >
+                        身分證{getSortIndicator('IDNumber')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '12%', cursor: 'pointer' }}
+                          onClick={() => requestSort('CustomerName')}
+                        >
+                          姓名{getSortIndicator('CustomerName')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '15%', cursor: 'pointer' }}
+                          onClick={() => requestSort('Phone')}
+                        >
+                          電話{getSortIndicator('Phone')}
+                        </th>
+                        <th 
+                          style={{ borderColor: 'var(--brand-muted)', width: '30%', cursor: 'pointer' }}
+                          onClick={() => requestSort('Address')}
+                        >
+                          地址 {getSortIndicator('Address')}
+                        </th>
                         <th className="status-col" style={{ borderColor: 'var(--brand-muted)', width: '13%' }}>狀態</th>
                         <th style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', width: '12%' }}>操作</th>
                       </tr>
@@ -406,44 +496,42 @@ const CustomersPage = () => {
                               </Badge>
                             </td>
                             <td className="actions-col" style={{ borderColor: 'var(--brand-muted)', textAlign: 'center' }}>
-                              <Button 
-                                size="sm" 
-                                variant="outline-primary" 
-                                className="me-1 mb-1"
-                                onClick={() => handleEdit(c)}
-                                style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                title="編輯"
-                              >
-                                <PencilSquare className="me-1" />
-                              </Button>
+                              <OverlayTrigger placement="top" overlay={<Tooltip>修改客戶資料</Tooltip>}>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline-primary" 
+                                  className="me-1 mb-1"
+                                  onClick={() => handleEdit(c)}
+                                  style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem' }}
+                                >
+                                  <PencilSquare />
+                                </Button>
+                              </OverlayTrigger>
+
                               {c.ConsumptionStatus === 'Active' ? (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-danger"
-                                  className="mb-1"
-                                  onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
-                                  style={{ color: 'var(--brand-danger-outline)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                                  onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
-                                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                  title="停用"
-                                >
-                                  <XCircle className="me-1" />
-                                </Button>
+                                <OverlayTrigger placement="top" overlay={<Tooltip>停用此客戶</Tooltip>}>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-danger"
+                                    className="mb-1"
+                                    onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
+                                    style={{ color: 'var(--brand-danger-outline)', padding: '0.25rem 0.5rem' }}
+                                  >
+                                    <XCircle />
+                                  </Button>
+                                </OverlayTrigger>
                               ) : (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline-success" 
-                                  className="mb-1"
-                                  onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
-                                  style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
-                                  onMouseEnter={(e) => e.target.style.backgroundColor = '#F5EFEB'}
-                                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                  title="啟用"
-                                >
-                                  <CheckCircle className="me-1"  />
-                                </Button>
+                                <OverlayTrigger placement="top" overlay={<Tooltip>重新啟用客戶</Tooltip>}>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-success" 
+                                    className="mb-1"
+                                    onClick={() => handleToggleStatus(c.IDNumber, c.ConsumptionStatus)}
+                                    style={{ borderColor: 'var(--brand-1)', color: 'var(--brand-1)', padding: '0.25rem 0.5rem' }}
+                                  >
+                                    <CheckCircle />
+                                  </Button>
+                                </OverlayTrigger>
                               )}
                             </td>
                           </tr>
