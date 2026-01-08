@@ -1,0 +1,302 @@
+
+[data-bs-theme="light"] {
+
+   /* 背景與版面 */
+  --bg-app: #FAF7F2;
+  --app-bg: var(--bg-app);
+
+
+  --bg-primary: #4a3619;
+  --primary-bg: var(--bg-primary);
+  --bg-primary-hover: #6F5738;
+
+  --bg-big-card:#604826;
+  --bg-small-card:#FFFBF8;
+
+
+  /* 文字顏色 */
+  --text-primary: #483523;
+  --text-secondary: #eaeaea;
+  --text-third: #FFE5CC;
+
+  --text-on-primary: #FFFFFF;
+  --text-light: #FFE5CC;
+  --text-muted: #70695e;
+  
+  /* 主要/強調色 */
+  --primary-hover-bg: #6F5738;
+  --accent-bg: #A67C52;
+
+  /* 背景與版面 */
+  --surface-bg: #FFFBF8;
+  --table-bg: #FFFFFF;
+  --table-hover-bg: #FFF5F0;
+  --table-row-border: #E8D7C8;
+
+
+  /* 邊框顏色 */
+  --border-color: #E8D7C8;
+  --border-accent: #D4A574;
+
+  /* 表單顏色 */
+  --form-bg: #FFFFFF;
+  --form-text: #212529;
+  --form-border: #D4A574;
+  --form-focus-border: #8B6F47;
+  --focus-ring: rgba(139, 111, 71, 0.15);
+
+  /* 陰影 */
+  --shadow-color: rgba(139, 111, 71, 0.1);
+  --shadow-hover-color: rgba(139, 111, 71, 0.15);
+  --shadow-strong-color: rgba(139, 111, 71, 0.3);
+  
+  --brand-1: #8B6F47;         
+  --brand-2: #9D7E52;          
+  --brand-dark-1: #6B5437;     
+  --brand-dark-2: #7D5E42;   
+  --brand-muted: #E8D7C8;       
+  --brand-accent: #D4A574;      
+  --brand-bg-soft: #FFFBF8;     
+  --brand-danger-outline: #cb2f00ff; 
+  --brand-gray: #999999;     
+
+  /* 狀態色 */
+  --state-success-bg: #28a745;   
+  --state-success-fg: #ffffff;   
+  --state-neutral-icon: var(--brand-gray); 
+  --bs-primary: var(--brand-1);
+  --bs-link-color: var(--brand-1);
+}
+
+/* 暗黑模式*/
+[data-bs-theme="dark"] {
+  /* 背景與版面 */
+  --bg-app: #12100E;           
+  --app-bg: var(--bg-app);
+
+  --bg-primary: #4a3619;       
+  --primary-bg: var(--bg-primary);
+  --bg-primary-hover: #6F5738;  
+
+  /* 卡片底色 */
+  --bg-big-card: #2A2217;        
+  /* 文字顏色） */
+  --text-primary: #EADFCC;    
+  --text-secondary: #D8CEBE;  
+  --text-third: #D4B790;        
+  --text-on-primary: #FFFFFF;  
+  --text-light: #F4E8D6;      
+  --text-muted: #A59B8F;        
+
+  --primary-hover-bg: #6F5738; 
+  --accent-bg: #A67C52;        
+
+  /* 表面與表格 */
+  --surface-bg: #1E1A16;       
+  --table-bg: #1A1713;         
+  --table-hover-bg: #232019;   
+  --table-row-border: #2C2721;  
+
+  /* 邊框顏色 */
+  --border-color: #2C2721;     
+  --border-accent: #8B6F47;   
+
+  /* 表單顏色 */
+  --form-bg: #1E1A16;
+  --form-text: #EADFCC;
+  --form-border: #594A33;
+  --form-focus-border: #D4A574;
+  --focus-ring: rgba(212, 165, 116, 0.25);
+
+  /* 陰影（暗色環境） */
+  --shadow-color: rgba(0, 0, 0, 0.40);
+  --shadow-hover-color: rgba(0, 0, 0, 0.55);
+  --shadow-strong-color: rgba(0, 0, 0, 0.70);
+
+  --brand-1: #D4A574;          
+  --brand-2: #A67C52;           
+  --brand-dark-1: #3A2F20;   
+  --brand-dark-2: #4B3B28;
+  --brand-muted: #594A33;      
+  --brand-accent: #D4A574;      
+  --brand-bg-soft: #1E1A16;     
+  --brand-danger-outline: #cb2f00ff;
+  --brand-gray: #666666;     
+
+  /* 狀態色 */
+  --state-success-bg: #34D399;  
+  --state-success-fg: #0b0b0b;   
+  --state-success-fg: #ffffff;  
+  --state-neutral-icon: var(--brand-gray);
+  --bs-primary: var(--brand-1);
+  --bs-link-color: var(--brand-1);
+}
+
+
+body {
+  background-color: var(--bg-app);
+  min-height: 100vh;
+}
+
+/* navbar */
+.navbar-custom {
+  background-color: var(--bg-primary) !important;
+}
+.navbar-custom .navbar-toggler {
+  border-color: var(--text-light);
+}
+
+/* cards */
+.big-card-custom,
+.big-card {
+  background-color: var(--bg-big-card);
+  color: var(--text-secondary);
+}
+
+.big-card-custom .lead-text,
+.big-card .lead-text {
+  color: var(--text-third);
+}
+
+.small-card-custom,
+.small-card {
+  background: var(--bg-small-card);
+  border-color: var(--border-color);
+}
+.small-card-custom:hover,
+.small-card:hover {
+  border-color: var(--border-accent);
+}
+
+.card-border-top-custom,
+.card-border-top {
+  border-top: 4px solid var(--bg-primary);
+}
+
+
+/* button */
+.btn-primary-custom {
+  background-color: var(--bg-primary);
+  border: none;
+  color: var(--text-secondary);
+}
+.btn-primary-custom:hover,
+.btn-primary-custom:focus,
+.btn-primary-custom:active {
+  background-color: var(--bg-primary-hover);
+  box-shadow: 0 4px 12px var(--shadow-strong-color);
+}
+
+/* table */
+.table-custom {
+  background: var(--table-bg);
+  border-color: var(--border-color);
+}
+
+.table-custom thead {
+  background-color: var(--primary-bg);
+  color: var(--text-on-primary);
+}
+
+.table-custom tbody tr:hover {
+  background: var(--table-hover-bg);
+}
+
+/* text color */
+.text-primary-custom {
+  color: var(--text-primary);
+}
+
+/* footer style */
+.footer-custom {
+  background-color: var(--primary-bg);
+  color: var(--text-on-primary);
+}
+
+.footer-custom small {
+  color: var(--text-light);
+}
+
+.text-brand { color: var(--brand-1) !important; }
+.border-brand { border-color: var(--brand-accent) !important; }
+.border-muted { border-color: var(--brand-muted) !important; }
+.bg-soft { background-color: var(--brand-bg-soft) !important; }
+
+.bg-gradient-brand {
+  background: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%) !important;
+  color: var(--text-on-primary) !important;
+}
+.bg-gradient-table-header {
+  background: linear-gradient(135deg, var(--brand-dark-1) 0%, var(--brand-dark-2) 100%) !important;
+  color: var(--text-on-primary) !important;
+}
+.border-top-brand { border-top: 4px solid var(--brand-1) !important; }
+.border-top-brand-2 { border-top: 4px solid var(--brand-2) !important; }
+
+.badge-active {
+  background: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%) !important;
+}
+.badge-inactive { background: var(--brand-gray) !important; }
+
+.btn-outline-danger-brand {
+  color: var(--brand-danger-outline) !important;
+  border-color: var(--brand-danger-outline) !important;
+}
+
+
+/* form input  */
+.form-control,
+.form-select,
+.form-check-input,
+.input-group-text,
+.form-control-plaintext {
+  background-color: var(--form-bg);
+  color: var(--form-text);
+  border-color: var(--form-border);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--form-bg);
+  color: var(--form-text);
+  border-color: var(--form-focus-border);
+  box-shadow: 0 0 0 0.2rem var(--focus-ring);
+}
+
+/* Checkbox*/
+.form-check-input {
+  background-color: var(--form-bg);
+  border-color: var(--form-border);
+}
+
+.form-check-input:checked {
+  background-color: var(--primary-bg);
+  border-color: var(--primary-bg);
+}
+
+/* Input Group */
+.input-group-text {
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+}
+
+/* 狀態底色（避免看起來全黑） */
+.form-control:disabled,
+.form-control[readonly] {
+  background-color: rgba(255, 255, 255, 0.02);
+  color: var(--form-text);
+}
+
+/* 修正瀏覽器自動填入在暗色模式下的底色與文字色 */
+input.form-control:-webkit-autofill,
+textarea.form-control:-webkit-autofill,
+select.form-select:-webkit-autofill {
+  -webkit-text-fill-color: var(--form-text);
+  -webkit-box-shadow: 0 0 0px 1000px var(--form-bg) inset;
+  box-shadow: 0 0 0px 1000px var(--form-bg) inset;
+}
