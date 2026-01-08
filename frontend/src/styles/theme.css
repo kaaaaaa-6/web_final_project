@@ -3,12 +3,10 @@
 
    /* 背景與版面 */
   --bg-app: #FAF7F2;
-  /* 與舊版變數相容的別名（避免現有樣式失效） */
   --app-bg: var(--bg-app);
 
 
   --bg-primary: #4a3619;
-  /* 與舊版變數相容的別名 */
   --primary-bg: var(--bg-primary);
   --bg-primary-hover: #6F5738;
 
@@ -26,12 +24,10 @@
   --text-muted: #70695e;
   
   /* 主要/強調色 */
-  /* --primary-bg: #604826; */
   --primary-hover-bg: #6F5738;
   --accent-bg: #A67C52;
 
   /* 背景與版面 */
-  /* --app-bg: #FAF7F2; */
   --surface-bg: #FFFBF8;
   --table-bg: #FFFFFF;
   --table-hover-bg: #FFF5F0;
@@ -54,38 +50,103 @@
   --shadow-hover-color: rgba(139, 111, 71, 0.15);
   --shadow-strong-color: rgba(139, 111, 71, 0.3);
   
-  /* Brand palette extracted from components */
-  --brand-1: #8B6F47;           /* primary accent */
-  --brand-2: #9D7E52;           /* secondary accent */
-  --brand-dark-1: #6B5437;      /* table header start */
-  --brand-dark-2: #7D5E42;      /* table header end */
-  --brand-muted: #E8D7C8;       /* borders, table */
-  --brand-accent: #D4A574;      /* inputs, accents */
-  --brand-bg-soft: #FFFBF8;     /* card/body soft background */
-  --brand-danger-outline: #cb2f00ff; /* action danger outline */
-  --brand-gray: #999999;        /* inactive badge */
+  --brand-1: #8B6F47;         
+  --brand-2: #9D7E52;          
+  --brand-dark-1: #6B5437;     
+  --brand-dark-2: #7D5E42;   
+  --brand-muted: #E8D7C8;       
+  --brand-accent: #D4A574;      
+  --brand-bg-soft: #FFFBF8;     
+  --brand-danger-outline: #cb2f00ff; 
+  --brand-gray: #999999;     
+
+  /* 狀態色 */
+  --state-success-bg: #28a745;   
+  --state-success-fg: #ffffff;   
+  --state-neutral-icon: var(--brand-gray); 
+  --bs-primary: var(--brand-1);
+  --bs-link-color: var(--brand-1);
+}
+
+/* 暗黑模式*/
+[data-bs-theme="dark"] {
+  /* 背景與版面 */
+  --bg-app: #12100E;           
+  --app-bg: var(--bg-app);
+
+  --bg-primary: #4a3619;       
+  --primary-bg: var(--bg-primary);
+  --bg-primary-hover: #6F5738;  
+
+  /* 卡片底色 */
+  --bg-big-card: #2A2217;        
+  /* 文字顏色） */
+  --text-primary: #EADFCC;    
+  --text-secondary: #D8CEBE;  
+  --text-third: #D4B790;        
+  --text-on-primary: #FFFFFF;  
+  --text-light: #F4E8D6;      
+  --text-muted: #A59B8F;        
+
+  --primary-hover-bg: #6F5738; 
+  --accent-bg: #A67C52;        
+
+  /* 表面與表格 */
+  --surface-bg: #1E1A16;       
+  --table-bg: #1A1713;         
+  --table-hover-bg: #232019;   
+  --table-row-border: #2C2721;  
+
+  /* 邊框顏色 */
+  --border-color: #2C2721;     
+  --border-accent: #8B6F47;   
+
+  /* 表單顏色 */
+  --form-bg: #1E1A16;
+  --form-text: #EADFCC;
+  --form-border: #594A33;
+  --form-focus-border: #D4A574;
+  --focus-ring: rgba(212, 165, 116, 0.25);
+
+  /* 陰影（暗色環境） */
+  --shadow-color: rgba(0, 0, 0, 0.40);
+  --shadow-hover-color: rgba(0, 0, 0, 0.55);
+  --shadow-strong-color: rgba(0, 0, 0, 0.70);
+
+  --brand-1: #D4A574;          
+  --brand-2: #A67C52;           
+  --brand-dark-1: #3A2F20;   
+  --brand-dark-2: #4B3B28;
+  --brand-muted: #594A33;      
+  --brand-accent: #D4A574;      
+  --brand-bg-soft: #1E1A16;     
+  --brand-danger-outline: #cb2f00ff;
+  --brand-gray: #666666;     
+
+  /* 狀態色 */
+  --state-success-bg: #34D399;  
+  --state-success-fg: #0b0b0b;   
+  --state-success-fg: #ffffff;  
+  --state-neutral-icon: var(--brand-gray);
+  --bs-primary: var(--brand-1);
+  --bs-link-color: var(--brand-1);
 }
 
 
-/* 套用主題變數的全域樣式（改用單色背景） */
 body {
   background-color: var(--bg-app);
   min-height: 100vh;
 }
 
-/* 導覽列樣式 */
+/* navbar */
 .navbar-custom {
   background-color: var(--bg-primary) !important;
 }
-
-/* Toggler 邊框在自訂主題下的對比度（若未被 variant 覆蓋） */
 .navbar-custom .navbar-toggler {
   border-color: var(--text-light);
 }
 
-
-/* ====================首頁==================== */
-/* 以 -custom 作為命名結尾，並保留舊別名以相容 */
+/* cards */
 .big-card-custom,
 .big-card {
   background-color: var(--bg-big-card);
@@ -107,28 +168,15 @@ body {
   border-color: var(--border-accent);
 }
 
-/* 頁面卡片上方邊框 */
 .card-border-top-custom,
 .card-border-top {
   border-top: 4px solid var(--bg-primary);
 }
 
 
-/* 卡片樣式 */
-/* .card-custom {
-  background: var(--surface-bg);
-  border-color: var(--border-color);
-} */
-/* 
-.card-custom:hover {
-  border-color: var(--border-accent);
-} */
-
-/* 主要按鈕樣式 */
+/* button */
 .btn-primary-custom {
-  /* background-color: var(--bg-primary); */
-  
-  background-color: #ff0000;
+  background-color: var(--bg-primary);
   border: none;
   color: var(--text-secondary);
 }
@@ -139,7 +187,7 @@ body {
   box-shadow: 0 4px 12px var(--shadow-strong-color);
 }
 
-/* 表格樣式 */
+/* table */
 .table-custom {
   background: var(--table-bg);
   border-color: var(--border-color);
@@ -154,24 +202,12 @@ body {
   background: var(--table-hover-bg);
 }
 
-/* 標題卡片樣式 */
-/* .hero-card {
-  background-color: var(--primary-bg);
-  color: var(--text-on-primary);
-}
-
-.hero-card .lead {
-  color: var(--text-light);
-} */
-
-
-
-/* 文字顏色 */
+/* text color */
 .text-primary-custom {
   color: var(--text-primary);
 }
 
-/* 頁尾樣式 */
+/* footer style */
 .footer-custom {
   background-color: var(--primary-bg);
   color: var(--text-on-primary);
@@ -181,7 +217,6 @@ body {
   color: var(--text-light);
 }
 
-/* ===== Utility classes for brand colors & gradients ===== */
 .text-brand { color: var(--brand-1) !important; }
 .border-brand { border-color: var(--brand-accent) !important; }
 .border-muted { border-color: var(--brand-muted) !important; }
@@ -209,7 +244,7 @@ body {
 }
 
 
-/* 表單輸入元件樣式（明亮/暗黑共用，使用主題變數） */
+/* form input  */
 .form-control,
 .form-select,
 .form-check-input,
@@ -233,7 +268,7 @@ body {
   box-shadow: 0 0 0 0.2rem var(--focus-ring);
 }
 
-/* Checkbox / Radio 在暗色系下的可視性 */
+/* Checkbox*/
 .form-check-input {
   background-color: var(--form-bg);
   border-color: var(--form-border);
@@ -244,13 +279,13 @@ body {
   border-color: var(--primary-bg);
 }
 
-/* Input Group 前後綴的對比度 */
+/* Input Group */
 .input-group-text {
   background-color: var(--surface-bg);
   color: var(--text-primary);
 }
 
-/* Disabled / Readonly 狀態稍微區別底色（避免看起來全黑） */
+/* 狀態底色（避免看起來全黑） */
 .form-control:disabled,
 .form-control[readonly] {
   background-color: rgba(255, 255, 255, 0.02);

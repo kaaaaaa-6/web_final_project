@@ -3,12 +3,10 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 // 建立主題 Context
 const ThemeContext = createContext();
 
-// 自訂 Hook 方便使用
 export const useTheme = () => {
   return useContext(ThemeContext);
 };
 
-// ThemeProvider 元件
 export const ThemeProvider = ({ children }) => {
   // 從 localStorage 讀取之前的設定，預設是 light
   const [theme, setTheme] = useState(() => {
@@ -16,7 +14,7 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme ? savedTheme : 'light';
   });
 
-  // 切換主題的函數
+  // 切換主題
   const toggleTheme = () => {
     setTheme((prevTheme) => {
       const newTheme = prevTheme === 'light' ? 'dark' : 'light';
@@ -24,7 +22,7 @@ export const ThemeProvider = ({ children }) => {
     });
   };
 
-  // 當主題改變時，更新 HTML 的 data-bs-theme 屬性和 localStorage
+  // 更新 HTML 的 data-bs-theme 屬性和 localStorage
   useEffect(() => {
     document.documentElement.setAttribute('data-bs-theme', theme);
     localStorage.setItem('theme', theme);

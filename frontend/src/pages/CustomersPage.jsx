@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Table, Alert, Card, Row, Col, Spinner, Badge, InputGroup } from 'react-bootstrap';
 import { Search, PencilSquare, PlusCircle, Save, CheckCircle, XCircle, ClipboardData } from 'react-bootstrap-icons';
-import { API_CUSTOMERS_URL } from '../api/apiConfig';
 
-const API_BASE_URL = API_CUSTOMERS_URL;
+
+const API_BASE_URL = "http://localhost:8080/api/customers";
 
 const CustomersPage = () => {
   
@@ -47,13 +47,12 @@ const CustomersPage = () => {
 
 
 
-  //Event Handlers ====================
+  //Event Handlers 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     // 輸入清理與限制
     if (name === 'idNumber') {
-      // 身分證：轉大寫，只允許英數，長度最多 10
       const cleaned = value
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '')
@@ -63,7 +62,6 @@ const CustomersPage = () => {
     }
 
     if (name === 'phone') {
-      // 電話：僅允許數字
       const digitsOnly = value.replace(/\D/g, '').slice(0, 10); // 最多 10 位
       setFormData(prev => ({ ...prev, phone: digitsOnly }));
       return;
@@ -92,7 +90,7 @@ const CustomersPage = () => {
 
     // 進階格式驗證
     const idPattern = /^[A-Z][0-9]{9}$/; // 1 英文字 + 9 位數字
-    const phonePattern = /^[0-9]{8,10}$/; // 8~10 位數字
+    const phonePattern = /^[0-9]{8,10}$/; 
 
     if (!idPattern.test(formData.idNumber)) {
       setError('身分證格式需為 1 英文字 + 9 位數字');
@@ -322,7 +320,7 @@ const CustomersPage = () => {
               <Row className="mb-4 align-items-center">
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroup.Text style={{ backgroundColor: '#F5EFEB', borderColor: 'var(--brand-accent)' }}>
+                    <InputGroup.Text style={{ backgroundColor: 'var(--surface-bg)', borderColor: 'var(--brand-accent)' }}>
                       <Search style={{ color: 'var(--brand-1)' }} />
                     </InputGroup.Text>
                     <Form.Control
@@ -336,22 +334,30 @@ const CustomersPage = () => {
                 </Col>
                 <Col md={6} className="text-md-end mt-2 mt-md-0">
                   <Button 
-                    variant={filterStatus === 'Active' ? 'primary' : 'outline-primary'} 
+                    variant="outline-dark" 
                     size="sm"
                     className="me-2"
                     onClick={() => setFilterStatus('Active')}
-                    style={filterStatus === 'Active' ? { background: 'linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%)', border: 'none' } : {}}
+                    style={filterStatus === 'Active' 
+                      ? { background: 'var(--brand-2) ', border: 'none', color: '#fff' }
+                      : { borderColor: 'var(--brand-1)', color: 'var(--brand-1)', backgroundColor: 'transparent' }}
                   >Active</Button>
                   <Button 
-                    variant={filterStatus === 'Inactive' ? 'secondary' : 'outline-secondary'} 
+                    variant="outline-dark" 
                     size="sm"
                     className="me-2"
                     onClick={() => setFilterStatus('Inactive')}
+                    style={filterStatus === 'Inactive' 
+                      ? { background: 'var(--brand-2)', border: 'none', color: '#fff' }
+                      : { borderColor: 'var(--brand-1)', color: 'var(--brand-1)', backgroundColor: 'transparent' }}
                   >Inactive</Button>
                   <Button 
-                    variant={filterStatus === 'All' ? 'dark' : 'outline-dark'} 
+                    variant="outline-dark" 
                     size="sm"
                     onClick={() => setFilterStatus('All')}
+                    style={filterStatus === 'All' 
+                      ? { background: 'var(--brand-2)', border: 'none', color: '#fff' }
+                      : { borderColor: 'var(--brand-1)', color: 'var(--brand-1)', backgroundColor: 'transparent' }}
                   >全部</Button>
                 </Col>
               </Row>
@@ -365,16 +371,16 @@ const CustomersPage = () => {
               ) : (
                 <div className="table-responsive">
                   <Table hover bordered className="mb-0 customers-table" style={{ borderColor: 'var(--brand-muted)', tableLayout: 'fixed' }}>
-                    <thead style={{ background: 'linear-gradient(135deg, #6B5437 0%, #7D5E42 100%)', color: 'white', fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                    <thead style={{ background: '#7D5E42', color: 'white', fontWeight: '700', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                       {/* 使用品牌深色漸層 */}
                       
                       <tr>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '15%' }}>身分證</th>
                         <th style={{ borderColor: 'var(--brand-muted)', width: '12%' }}>姓名</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '13%' }}>電話</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', width: '28%' }}>地址</th>
-                        <th className="status-col" style={{ borderColor: 'var(--brand-muted)', width: '10%' }}>狀態</th>
-                        <th style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', width: '20%' }}>操作</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '15%' }}>電話</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', width: '30%' }}>地址</th>
+                        <th className="status-col" style={{ borderColor: 'var(--brand-muted)', width: '13%' }}>狀態</th>
+                        <th style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', width: '12%' }}>操作</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -390,7 +396,7 @@ const CustomersPage = () => {
                                 className="status-badge"
                                 style={{ 
                                   background: c.ConsumptionStatus === 'Active' 
-                                    ? 'linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%)' 
+                                    ? 'var(--brand-2)' 
                                     : 'var(--brand-gray)',
                                   fontWeight: '600',
                                   borderRadius: '20px'
