@@ -19,8 +19,7 @@ const OrdersPage = () => {
     qtyA: 0,
     qtyB: 0,
     qtyC: 0,
-    supplierName: '',
-    supplierId: ''
+    supplierName: ''
   });
   const [editingId, setEditingId] = useState(null);
   const [keyword, setKeyword] = useState('');
@@ -98,8 +97,7 @@ const OrdersPage = () => {
       qtyA: 0,
       qtyB: 0,
       qtyC: 0,
-      supplierName: '',
-      supplierId: ''
+      supplierName: ''
     });
     setEditingId(null);
     setMessage({ type: '', text: '' });
@@ -115,8 +113,7 @@ const OrdersPage = () => {
       qtyA: order.QtyA || 0,
       qtyB: order.QtyB || 0,
       qtyC: order.QtyC || 0,
-      supplierName: order.SupplierName || '',
-      supplierId: order.SupplierID || ''
+      supplierName: order.SupplierName || ''
     });
     setMessage({ type: 'info', text: `正在編輯訂單：${order.OrderNumber}` });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -139,8 +136,7 @@ const OrdersPage = () => {
       qtyA: parseInt(formData.qtyA, 10),
       qtyB: parseInt(formData.qtyB, 10),
       qtyC: parseInt(formData.qtyC, 10),
-      supplierName: formData.supplierName.trim(),
-      supplierID: formData.supplierId.trim(),
+      supplierName: formData.supplierName.trim()
     };
 
     try {
@@ -400,14 +396,9 @@ const OrdersPage = () => {
                   </Col>
                 </Row>
 
-                <Form.Group className="mb-3">
+                <Form.Group className="mb-4">
                     <Form.Label style={{ fontWeight: '600', color: 'var(--brand-1)' }}>供應商名稱</Form.Label>
                     <Form.Control type="text" name="supplierName" value={formData.supplierName} onChange={handleInputChange} style={{ borderColor: 'var(--brand-accent)' }} />
-                </Form.Group>
-                
-                <Form.Group className="mb-4">
-                    <Form.Label style={{ fontWeight: '600', color: 'var(--brand-1)' }}>供應商編號</Form.Label>
-                    <Form.Control type="text" name="supplierId" value={formData.supplierId} onChange={handleInputChange} style={{ borderColor: 'var(--brand-accent)' }} />
                 </Form.Group>
 
                 <div className="d-grid gap-2">
@@ -608,7 +599,7 @@ const OrdersPage = () => {
                             ${o.OrderAmount}
                           </td>
                           <td style={{ borderColor: 'var(--brand-muted)' }}>
-                            <small>{o.SupplierName}<br/>{o.SupplierID}</small>
+                            <small>{o.SupplierName || '-'}</small>
                           </td>
                           <td style={{ borderColor: 'var(--brand-muted)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                             <OverlayTrigger placement="top" overlay={<Tooltip>修改訂單內容</Tooltip>}>

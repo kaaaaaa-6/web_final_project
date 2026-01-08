@@ -3,7 +3,7 @@ import {
   Container, Row, Col, Form, Button, Table, Card, Badge, 
   InputGroup, Spinner, OverlayTrigger, Tooltip, Toast, ToastContainer, Breadcrumb 
 } from 'react-bootstrap';
-import { PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, Check, XCircle} from 'react-bootstrap-icons';
+import { PencilSquare, PlusCircle, Save, CheckCircle, ClipboardData, Search, XCircle} from 'react-bootstrap-icons';
 
 
 const API_BASE_URL = "http://localhost:8080/api/customers";
@@ -12,8 +12,6 @@ const CustomersPage = () => {
   
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false); //  Loading 狀態
-  const [error, setError] = useState(null);      //  錯誤訊息處理
-  const [successMsg, setSuccessMsg] = useState('');
 
   // 搜尋與排序篩選狀態
   const [filterStatus, setFilterStatus] = useState('Active');
@@ -41,6 +39,7 @@ const CustomersPage = () => {
   // 初始載入
   useEffect(() => {
     fetchCustomers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCustomers = async () => {
@@ -49,7 +48,6 @@ const CustomersPage = () => {
       const res = await fetch(API_BASE_URL);
       const data = await res.json();
       setCustomers(Array.isArray(data) ? data : []);
-      setError(null);
     } catch (err) {
       showNotify('danger', '無法連線到伺服器');
     } finally {
@@ -86,8 +84,6 @@ const CustomersPage = () => {
   const resetForm = () => {
     setFormData({ idNumber: '', customerName: '', phone: '', address: '' });
     setIsEditing(false);
-    setError(null);
-    setSuccessMsg('');
   };
 
   // 提交表單
@@ -96,7 +92,7 @@ const CustomersPage = () => {
     
     // 前端基本驗證 
     if (!formData.idNumber || !formData.customerName) {
-      setError('身分證與姓名為必填欄位');
+      showNotify('danger', '身分證與姓名為必填欄位');
       return;
     }
 
@@ -105,12 +101,12 @@ const CustomersPage = () => {
     const phonePattern = /^[0-9]{8,10}$/; 
 
     if (!idPattern.test(formData.idNumber)) {
-      setError('身分證格式需為 1 英文字 + 9 位數字');
+      showNotify('danger', '身分證格式需為 1 英文字 + 9 位數字');
       return;
     }
 
     if (formData.phone && !phonePattern.test(formData.phone)) {
-      setError('電話號碼需為 8~10 位數字');
+      showNotify('danger', '電話號碼需為 8~10 位數字');
       return;
     }
 
@@ -120,7 +116,7 @@ const CustomersPage = () => {
         (c) => (c.IDNumber || '').toUpperCase() === formData.idNumber.toUpperCase()
       );
       if (exists) {
-        setError('此身分證已存在，無法新增。');
+        showNotify('danger', '此身分證已存在，無法新增。');
         return;
       }
     }
@@ -152,7 +148,7 @@ const CustomersPage = () => {
       }
 
       if (result && result.error) {
-        setError(result.error);
+        showNotify('danger', result.error);
         return;
       }
 
@@ -177,30 +173,49 @@ const CustomersPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+
+
   // 切換狀態 (Active <-> Inactive)
+  // Inactive = 刪除，呼叫 /api/customers/delete
+  // Active = 啟用，呼叫 /api/customers/status
   const handleToggleStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-    const confirmMsg = currentStatus === 'Active' 
-      ? `確定要停用客戶 ${id} 嗎？` 
-      : `確定要啟用客戶 ${id} 嗎？`;
+    if (currentStatus === 'Active') {
+      // 停用 = 刪除
+      const confirmMsg = `確定要刪除客戶 ${id} 嗎？`;
+      if (!window.confirm(confirmMsg)) return;
 
-    if (!window.confirm(confirmMsg)) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/delete?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await res.json();
+        if(result.error) throw new Error(result.error);
+        
+        showNotify('success', '客戶已刪除');
+        fetchCustomers();
+      } catch(err) {
+        showNotify('danger', '刪除失敗: ' + err.message);
+      }
+    } else {
+      // 啟用
+      const confirmMsg = `確定要啟用客戶 ${id} 嗎？`;
+      if (!window.confirm(confirmMsg)) return;
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idnumber: id, status: newStatus })
-      });
-      const result = await res.json();
-      if(result.error) throw new Error(result.error);
-      
-      // setSuccessMsg(newStatus === 'Active' ? '啟用成功' : '停用成功');
-      const msg = currentStatus === 'Active' ? '客戶已停用' : '客戶已啟用';
-      showNotify('success', msg);
-      fetchCustomers();
-    } catch(err) {
-      showNotify('danger', '狀態更新失敗: ' + err.message);
+      try {
+        const res = await fetch(`${API_BASE_URL}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idnumber: id, status: 'Active' })
+        });
+        const result = await res.json();
+        if(result.error) throw new Error(result.error);
+        
+        showNotify('success', '客戶已啟用');
+        fetchCustomers();
+      } catch(err) {
+        showNotify('danger', '啟用失敗: ' + err.message);
+      }
     }
   };
 

@@ -632,8 +632,9 @@ func main() {
 	// 	}
 	// })
 	// http.HandleFunc("/api/customers/update", handleUpdateCustomer)
+	// http.HandleFunc("/api/customers/delete", handleDeleteCustomer)
+	// http.HandleFunc("/api/customers/status", updateCustomerStatus)
 
-	// // API: 訂單
 	// http.HandleFunc("/api/orders", func(w http.ResponseWriter, r *http.Request) {
 	// 	if r.Method == http.MethodGet {
 	// 		handleGetOrders(w, r)
@@ -643,10 +644,8 @@ func main() {
 	// 		w.WriteHeader(http.StatusMethodNotAllowed)
 	// 	}
 	// })
-	// http.HandleFunc("/api/orders/update", handleUpdateOrder)
-	// http.HandleFunc("/api/customers/delete", handleDeleteCustomer)
 	// http.HandleFunc("/api/orders/delete", handleDeleteOrder)
-	// http.HandleFunc("/api/customers/status", updateCustomerStatus)
+	// http.HandleFunc("/api/orders/update", handleUpdateOrder)
 	router := mux.NewRouter()
 	// API:customer
 	router.HandleFunc("/api/customers", handleGetCustomers).Methods("GET")
@@ -660,7 +659,7 @@ func main() {
 	router.HandleFunc("/api/orders", handlePostOrder).Methods("POST")
 	router.HandleFunc("/api/orders/update", handleUpdateOrder)
 	router.HandleFunc("/api/orders/delete", handleDeleteOrder)
-	router.HandleFunc("/api/orders/deliver", handleMarkDelivered)
+	router.HandleFunc("/api/orders/deliver", handleMarkDelivered) // 交餐標記
 
 	// 靜態檔案：./public 底下
 	// publicDir := filepath.Join(".", "public")
