@@ -3,32 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <title>客戶管理</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-  :root {
-      --bg-color: #f5f7fa;
-      --container-bg: white;
-      --text-color: #333;
-      --link-bg: #007bff;
-      --link-hover: #0056c7;
-      --btn-toggle-bg: #6c757d;
-    }
-
-    [data-theme="dark"] {
-      --bg-color: #1a1a1a;
-      --container-bg: #2d2d2d;
-      --text-color: #f5f7fa;
-      --link-bg: #375a7f;
-      --link-hover: #2b4764;
-      --btn-toggle-bg: #f39c12; 
-    }
-
   body {
     font-family: "Microsoft JhengHei", sans-serif;
-    /* background: #f5f7fa; */
-    background: var(--bg-color);
-    color: var(--text-color);
+    background: #f5f7fa;
     margin: 0;
     padding: 0;
     display: flex;
@@ -38,19 +17,17 @@
   .container {
     width: 900px;
     margin-top: 40px;
-    /* background: white; */
-    background: var(--container-bg);
+    background: white;
     padding: 30px 40px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   }
 
-  h1 h2{
+  h1 {
     text-align: center;
     margin-bottom: 25px;
     font-size: 26px;
-    /* color: #333; */
-    color: var(--text-color);
+    color: #333;
   }
 
   a {
@@ -61,10 +38,10 @@
     text-decoration: underline;
   }
 
-  /* h2 {
+  h2 {
     margin-top: 30px;
     color: #333;
-  } */
+  }
 
   /* 表單 */
   label {
@@ -79,11 +56,6 @@
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    background: var(--container-bg); 
-    color: var(--text-color);      
-  }
-  [data-theme="dark"] input[type="text"] {
-    border-color: #555;
   }
 
   input[type="submit"], button {
@@ -127,26 +99,16 @@
     background: #007bff;
     color: white;
     padding: 10px;
-    cursor: pointer;
-    user-select: none;
-  }
-  th:hover {
-    background: #0056b3;
   }
 
   td {
     border-bottom: 1px solid #ddd;
     padding: 8px;
     text-align: center;
-    color: var(--text-color);
-  }
-  [data-theme="dark"] td {
-    border-bottom: 1px solid #444; 
   }
 
   tr:hover {
-    /* background: #f1f5ff; */
-    background: rgba(0, 123, 255, 0.1);
+    background: #f1f5ff;
   }
 
   /* Active / Inactive 按鈕列（預留 UI，JS 之後再加） */
@@ -169,9 +131,6 @@
 
   <h1>客戶管理</h1>
   <p><a href="index.html">回首頁</a></p>
-  <button id="themeToggle" style="margin-bottom: 20px; padding: 5px 10px; cursor: pointer;">
-    <i class="fa-regular fa-moon"></i>模式切換
-  </button>
 
   <h2>新增 / 修改客戶</h2>
 
@@ -217,11 +176,11 @@
   <table>
     <thead>
       <tr>
-        <th onclick="handleSort('IDNumber')">身分證 <i class="fa-solid fa-sort"></i></th>
-        <th onclick="handleSort('CustomerName')">姓名 <i class="fa-solid fa-sort"></i></th>
-        <th onclick="handleSort('Phone')">電話 <i class="fa-solid fa-sort"></i></th>
+        <th>身分證</th>
+        <th>姓名</th>
+        <th>電話</th>
         <th>地址</th>
-        <th onclick="handleSort('RegistrationDate')">註冊日期 <i class="fa-solid fa-sort"></i></th>
+        <th>註冊日期</th>
         <th>狀態</th>
         <th>操作</th>
       </tr>
@@ -231,37 +190,10 @@
 
 </div>
   <script>
-    const htmlEl = document.documentElement;
     let customersData = [];
     let editingCustomerId = null;
     let currentFilter = "Active";
     let customerKeyword = "";  
-    let sortConfig = { key: 'RegistrationDate', direction: 'desc' }; 
-
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-      themeToggle.addEventListener('click', () => {
-        const currentTheme = htmlEl.getAttribute('data-theme');
-        if (currentTheme === 'dark') {
-          htmlEl.removeAttribute('data-theme');
-          localStorage.setItem('theme', 'light');
-        } else {
-          htmlEl.setAttribute('data-theme', 'dark');
-          localStorage.setItem('theme', 'dark');
-        }
-      });
-    }
-    syncTheme();
-
-    function syncTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      htmlEl.setAttribute('data-theme', 'dark');
-    } else {
-      htmlEl.removeAttribute('data-theme');
-    }
-  }
-
     function showCustomerMessage(text, type) {
       const msg = document.getElementById("customerMessage");
       msg.textContent = text;
@@ -309,39 +241,23 @@
  function renderCustomerTable() {
     const tbody = document.getElementById("customerTableBody");
     tbody.innerHTML = "";
-
-    let sortedData = [...customersData]; 
-      sortedData.sort((a, b) => {
-        let valA = a[sortConfig.key] || "";
-        let valB = b[sortConfig.key] || "";
-        
-        // 數字或字串比較
-        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-
     const kw = customerKeyword.trim().toLowerCase();
-
-    sortedData.forEach((c) => { 
-      // 篩選狀態
+    // 這裡用 customersData.forEach，確保 idx 是原本陣列的 index
+    customersData.forEach((c, idx) => {
       if (currentFilter !== "All" && c.ConsumptionStatus !== currentFilter) {
-        return; 
+        return; // 不符合目前 filter 就跳過
       }
-      // 關鍵字搜尋
-      if (kw !== "") {
+    if (kw !== "") {
         const idLower = (c.IDNumber || "").toLowerCase();
         const nameLower = (c.CustomerName || "").toLowerCase();
         if (!idLower.includes(kw) && !nameLower.includes(kw)) {
-          return;
-        }
-      }
-
+        return;
+    }
+}
       const tr = document.createElement("tr");
       const regDate = c.RegistrationDate
         ? new Date(c.RegistrationDate).toISOString().slice(0, 10)
         : "";
-
       tr.innerHTML = `
         <td>${c.IDNumber}</td>
         <td>${c.CustomerName}</td>
@@ -350,30 +266,19 @@
         <td>${regDate}</td>
         <td>${c.ConsumptionStatus || ""}</td>
         <td>
-          <button type="button" onclick="startEditById('${c.IDNumber}')">編輯</button>
+          <button type="button" onclick="startEditCustomer(${idx})">編輯</button>
           ${c.ConsumptionStatus === "Active"
             ? `<button type="button" onclick="deleteCustomer('${c.IDNumber}')">刪除</button>`
             : ""}
           ${c.ConsumptionStatus === "Inactive"
             ? `<button type="button" onclick="activateCustomer('${c.IDNumber}')">啟用</button>`
             : ""}
+            
         </td>
       `;
       tbody.appendChild(tr);
     });
   }
-
-  function handleSort(key) {
-      if (sortConfig.key === key) {
-        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortConfig.key = key;
-        sortConfig.direction = 'asc';
-      }
-      renderCustomerTable();
-  }
-
-
 
     // 綁定篩選按鈕事件
     document.querySelectorAll(".filter-btn").forEach(btn => {
@@ -511,7 +416,7 @@
           });
       }
     });
-    // 綁定查詢事件
+    // 🔍 綁定查詢事件
     document.getElementById("customerSearchBtn").addEventListener("click", () => {
     customerKeyword = document.getElementById("customerSearch").value;
     renderCustomerTable();

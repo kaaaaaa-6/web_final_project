@@ -97,27 +97,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>訂單管理</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    :root {
-      --bg-color: #f5f7fa;
-      --container-bg: white;
-      --text-color: #333;
-      --link-bg: #007bff;
-      --link-hover: #0056c7;
-      --btn-toggle-bg: #6c757d;
-    }
-
-    [data-theme="dark"] {
-      --bg-color: #1a1a1a;
-      --container-bg: #2d2d2d;
-      --text-color: #f5f7fa;
-      --link-bg: #375a7f;
-      --link-hover: #2b4764;
-      --btn-toggle-bg: #f39c12; 
-    }
-    
     body {
       font-family: "Microsoft JhengHei", sans-serif;
       background: #f5f7fa;
@@ -229,16 +210,6 @@
       background: #007bff;
       color: white;
       padding: 8px 6px;
-      cursor: pointer;
-      user-select: none;
-    }
-    th:hover{
-      background: #0056b3;
-    }
-    th i {
-      margin-left: 5px;
-      font-size: 12px;
-      opacity: 0.7;
     }
 
     td {
@@ -324,10 +295,10 @@
         <input type="text" id="supplierName" />
       </div>
 
-      <!-- <div>
+      <div>
         <label for="supplierId">供應商編號(6碼)：</label>
         <input type="text" id="supplierId" />
-      </div> -->
+      </div>
 
       <div class="btn">
         <input type="submit" id="orderSubmitBtn" value="新增訂單" />
@@ -347,16 +318,16 @@
     <table>
       <thead>
         <tr>
-          <th onclick="handleOrderSort('OrderNumber')">訂單編號 <i class="fa-solid fa-sort"></i></th>
-          <th onclick="handleOrderSort('IDNumber')">身分證 <i class="fa-solid fa-sort"></i></th>
+          <th>訂單編號</th>
+          <th>身分證</th>
           <th>姓名</th>
-          <th onclick="handleOrderSort('OrderDate')">訂餐日期 <i class="fa-solid fa-sort"></i></th>
-          <th onclick="handleOrderSort('ExpectedDeliveryDate')">預計交餐 <i class="fa-solid fa-sort"></i></th>
+          <th>訂餐日期</th>
+          <th>預計交餐</th>
           <th>實際交餐</th>
           <th>A</th>
           <th>B</th>
           <th>C</th>
-          <th onclick="handleOrderSort('OrderAmount')">金額 <i class="fa-solid fa-sort"></i></th>
+          <th>金額</th>
           <th>供應商</th>
           <th>操作</th>
         </tr>
@@ -368,8 +339,6 @@
     let ordersData = [];
     let editingOrderNumber = null;
     let orderKeyword = ""; 
-    let orderSortConfig = { key: 'OrderNumber', direction: 'desc' };
-
     function showOrderMessage(text, type) {
       const msg = document.getElementById("orderMessage");
       msg.textContent = text;
@@ -435,44 +404,20 @@
         });
     }
 
-    function handleOrderSort(key) {
-      if (orderSortConfig.key === key) {
-        orderSortConfig.direction = orderSortConfig.direction === 'asc' ? 'desc' : 'asc';
-      } else {
-        orderSortConfig.key = key;
-        orderSortConfig.direction = 'asc';
-      }
-      renderOrderTable();
-    }
 
-      function renderOrderTable() {
-        const tbody = document.getElementById("orderTableBody");
-        tbody.innerHTML = "";
+        function renderOrderTable() {
+  const tbody = document.getElementById("orderTableBody");
+  tbody.innerHTML = "";
 
-        let sortedOrders = [...ordersData];
-        sortedOrders.sort((a, b) => {
-          let valA = a[orderSortConfig.key];
-          let valB = b[orderSortConfig.key];
+  const kw = orderKeyword.trim().toLowerCase();
 
-          // 處理數值排序 (編號、金額、數量)
-          if (typeof valA === 'number' && typeof valB === 'number') {
-            return orderSortConfig.direction === 'asc' ? valA - valB : valB - valA;
-          }
-
-          // 處理日期與字串排序
-          valA = (valA || "").toString().toLowerCase();
-          valB = (valB || "").toString().toLowerCase();
-          if (valA < valB) return orderSortConfig.direction === 'asc' ? -1 : 1;
-          if (valA > valB) return orderSortConfig.direction === 'asc' ? 1 : -1;
-          return 0;
-        });
-
-        const kw = orderKeyword.trim().toLowerCase();
-
-        sortedOrders.forEach((o) => {
+    ordersData.forEach((o, idx) => {
+        // 依身分證部分字串過濾（也可以再加姓名）
         if (kw !== "") {
-          const idLower = (o.IDNumber || "").toLowerCase();
-          if (!idLower.includes(kw)) return;
+        const idLower = (o.IDNumber || "").toLowerCase();
+        if (!idLower.includes(kw)) {
+            return;
+        }
         }
 
         const orderDate = toDateInputValue(o.OrderDate);
@@ -486,26 +431,25 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${o.OrderNumber}</td>
-          <td>${o.IDNumber}</td>
-          <td>${o.CustomerName || ""}</td>
-          <td>${orderDate}</td>
-          <td>${expDisplay}</td>
-          <td>${actDisplay}</td>
-          <td>${o.QtyA}</td>
-          <td>${o.QtyB}</td>
-          <td>${o.QtyC}</td>
-          <td>${o.OrderAmount || 0}</td>
-          <td>${o.SupplierName || ""}</td>
-          <td>
-            <button type="button" class="table-btn edit" onclick="startEditOrderByNum(${o.OrderNumber})">編輯</button>
-            <button type="button" class="table-btn delete" onclick="deleteOrder(${o.OrderNumber})">刪除</button>
-          </td>
+        <td>${o.OrderNumber}</td>
+        <td>${o.IDNumber}</td>
+        <td>${o.CustomerName || ""}</td>
+        <td>${orderDate}</td>
+        <td>${expDisplay}</td>
+        <td>${actDisplay}</td>
+        <td>${o.QtyA}</td>
+        <td>${o.QtyB}</td>
+        <td>${o.QtyC}</td>
+        <td>${o.OrderAmount || 0}</td>
+        <td>${o.SupplierName || ""}</td>
+        <td>
+            <button type="button" onclick="startEditOrder(${idx})">編輯</button>
+            <button type="button" onclick="deleteOrder(${o.OrderNumber})">刪除</button>
+        </td>
         `;
         tbody.appendChild(tr);
-      });
+    });
     }
-
     function resetOrderForm() {
       document.getElementById("orderForm").reset();
       document.getElementById("orderCustomerId").readOnly = false;
@@ -519,16 +463,15 @@
       document.getElementById("qtyC").value = 0;
     }
 
-    function startEditOrderByNum(orderNum) {
-      const o = ordersData.find(item => item.OrderNumber === orderNum);
-      if (!o) return;
-      
+    function startEditOrder(index) {
+      const o = ordersData[index];
       editingOrderNumber = o.OrderNumber;
+
       document.getElementById("orderNumberHidden").value = o.OrderNumber;
       document.getElementById("orderCustomerId").value = o.IDNumber;
-      document.getElementById("orderCustomerId").readOnly = true;
+      document.getElementById("orderCustomerId").readOnly = true; // 不改客戶
       document.getElementById("orderDate").value = toDateInputValue(o.OrderDate);
-      document.getElementById("orderDate").readOnly = true;
+      document.getElementById("orderDate").readOnly = true;       // 不改訂餐日期
 
       document.getElementById("expectedDate").value = toDateInputValue(o.ExpectedDeliveryDate);
       document.getElementById("expectedTime").value = o.ExpectedDeliveryTime ? toTimeInputValue(o.ExpectedDeliveryTime) : "";
@@ -645,7 +588,7 @@
             });
         }
 
-        // 訂單查詢：依身分證
+        // 🔍 訂單查詢：依身分證
         document.getElementById("orderSearchBtn").addEventListener("click", () => {
         orderKeyword = document.getElementById("orderSearch").value;
         renderOrderTable();
