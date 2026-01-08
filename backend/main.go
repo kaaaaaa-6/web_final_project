@@ -483,7 +483,7 @@ func updateCustomerStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// 交餐標記
+// 交餐標記****
 func handleMarkDelivered(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -507,9 +507,9 @@ func handleMarkDelivered(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("👉 標記訂單已交餐:", body.OrderNumber, body.ActualDate, body.ActualTime)
+	log.Println("標記訂單已交餐:", body.OrderNumber, body.ActualDate, body.ActualTime)
 
-	// ✨ 直接更新資料庫，不需要 Stored Procedure
+	// 直接更新資料庫，不需要 Stored Procedure
 	_, err := db.Exec(`
 		UPDATE CustomerOrderRecord
 		SET ActualDeliveryDate = @p1,
