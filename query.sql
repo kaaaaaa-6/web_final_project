@@ -1,9 +1,9 @@
-﻿IF DB_ID(N'測試用1') IS NULL
+﻿IF DB_ID(N'test') IS NULL
 BEGIN
-    CREATE DATABASE [測試用1];
+    CREATE DATABASE [test];
 END
 GO
-USE [測試用1];
+USE [test];
 GO
 CREATE TABLE CustomerBasicInfo (
     IDNumber           CHAR(10)       NOT NULL,
